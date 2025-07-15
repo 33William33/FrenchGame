@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <link href="styles/main.css" rel="stylesheet" type="text/css" />
+  <link href="styles/form.css" rel="stylesheet" type="text/css" />
+  <link href="styles/image.css" rel="stylesheet" type="text/css" />
+  <link href="styles/comment.css" rel="stylesheet" type="text/css" />
+  <title>The Web Gallery</title>
+</head>
+
+<body>
+  <header>
+    <a href="/" id="title">Match Game</a>
+  </header>
+  <p hidden>
+    <input id="check" />
+  </p>
+  <form class="form" id="signin-form" action="/signin" method="POST">
+    <div id="title-line">
+      <div class="form-title">Sign In!</div>
+    </div>
+    <input type="text" id="username" class="form-format" placeholder="Enter username" name="username" required />
+    <input type="text" id="password" class="form-format" placeholder="Enter password" name="password" required />
+    <button type="submit" class="btn">Login</button>
+  </form>
+
+  <form class="form" id="register-form" action="/register" method="POST">
+    <div id="title-line">
+      <div class="form-title">Sign Up!</div>
+    </div>
+    <input type="text" id="username" class="form-format" placeholder="Enter username" name="username" required />
+    <input type="text" id="password" class="form-format" placeholder="Enter password" name="password" required />
+    <button type="submit" class="btn">Sign Up</button>
+  </form>
+  <footer>
+    <a href="credits.html">credits</a>
+  </footer>
+  <script src="js/api-service.js"></script>
+</body>
+
+</html>

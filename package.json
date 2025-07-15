@@ -1,0 +1,45 @@
+{
+    "name": "a2-33william33",
+    "version": "1.0.0",
+    "type": "module",
+    "description": "The objective of these assignments is to build an application called *The Web Gallery* where users can share pictures and comments. This application is similar to existing web applications such as Facebook, Instagram or Tiktok.",
+    "main": "app.js",
+    "scripts": {
+        "start": "nodemon app.js",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/UTSCC09/a2-33William33.git"
+    },
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/UTSCC09/a2-33William33/issues"
+    },
+    "homepage": "https://github.com/UTSCC09/a2-33William33#readme",
+    "dependencies": {
+        "@langchain/openai": "^0.1.0",
+        "@seald-io/nedb": "^4.1.2",
+        "axios": "^1.9.0",
+        "bcrypt": "^5.0.1",
+        "body-parser": "^1.20.0",
+        "cookie-parser": "^1.4.6",
+        "cors": "^2.8.5",
+        "dotenv": "^16.0.1",
+        "express": "^4.18.1",
+        "helmet": "^5.1.0",
+        "jsonwebtoken": "^8.5.1",
+        "multer": "^1.4.5-lts.1",
+        "openai": "^4.0.0"
+    },
+    "devDependencies": {
+        "jshint": "^2.13.4",
+        "nodemon": "^2.0.16"
+    },
+    "electronWebpack": {
+        "externals": {
+            "@seald-io/nedb": "commonjs @seald-io/nedb"
+        }
+    }
+}

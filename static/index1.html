@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+    <link href="styles/main.css" rel="stylesheet" type="text/css" />
+    <link href="styles/form.css" rel="stylesheet" type="text/css" />
+    <link href="styles/image.css" rel="stylesheet" type="text/css" />
+    <link href="styles/comment.css" rel="stylesheet" type="text/css" />
+    <title>Match Game</title>
+</head>
+
+<body>
+    <header>
+        <a href="/" id="title">Match Game</a>
+    </header>
+    <label type="submit" class="switch">
+      <input id="check" type="checkbox" />Toggle</label
+    >
+    <!-- <label type="submit" id="trans" class="switch">
+      Translate All
+    </label> -->
+
+    <label type="submit" id="game"  class="switch">
+      Game
+    </label>
+    <label type="submit" id="spell"  class="switch">
+      Spell
+    </label>
+    <form class="form" id="logout-form" action="/logout" method="POST">
+      <button type="submit" class="btn">Logout</button>
+    </form>
+    <form class="form" id="create-add-form" >
+      <div id="title-line">
+        <div class="form-title">Add your image</div>
+      </div>
+      <input
+        type="text"
+        id="image-title"
+        class="form-format"
+        placeholder="Enter English word"
+        name="title"
+        required
+      />
+      <input
+        type="text"
+        id="author-name"
+        class="form-format"
+        placeholder="Enter French word"
+        name="author"
+        required
+      />
+      <button type="submit" class="btn">Add</button>
+    </form>
+
+    <div id="show"></div>
+    <div id="display"></div>
+    <div id="comt-form"></div>
+    <div id="comments"></div>
+    <p id="error_box"></p>
+
+    <footer>
+      <a href="credits.html">credits</a>
+    </footer>
+    <script src="js/api-service.js"></script>
+    <script src="js/index.js"></script>
+  </body>
+</html>
