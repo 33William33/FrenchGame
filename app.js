@@ -12,6 +12,7 @@ import bcrypt from "bcrypt";
 import Datastore from "@seald-io/nedb";
 import path from "path";
 import multer from "multer";
+import favicon from "serve-favicon";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -26,6 +27,9 @@ app.use(bodyParser.json());
 app.use(helmet());
 app.use(cors());
 app.use(cookieParser());
+
+// Serve favicon
+app.use(favicon(path.join(__dirname, 'static', 'favicon.ico')));
 
 // const model = new OpenAI({
 //     modelName: "dall-e-2", // or "dall-e-2"
@@ -44,6 +48,21 @@ let users = new Datastore({
 
 let logs = new Datastore({
     filename: path.join(__dirname, "db", "logs.db"),
+    timestampData: true,
+});
+
+let matchGameLogs = new Datastore({
+    filename: path.join(__dirname, "db", "match_game_logs.db"),
+    timestampData: true,
+});
+
+let spellingGameLogs = new Datastore({
+    filename: path.join(__dirname, "db", "spelling_game_logs.db"),
+    timestampData: true,
+});
+
+let dropGameLogs = new Datastore({
+    filename: path.join(__dirname, "db", "drop_game_logs.db"),
     timestampData: true,
 });
 
@@ -433,13 +452,16 @@ app.delete("/api/imgs/:imgid/", verifyToken, function (req, res, next) {
             }
             images.remove({ _id: img._id }, { multi: false }, function (err, num) {
                 if (err) return res.status(500).end(err);
-                comments.remove({ imageid: img._id }, { multi: true }, function (err, num) {
-                    if (err) return res.status(500).end(err);
-                    fs.unlinkSync('./uploads/' + img.filename);
-                    serverConfig.update({ _id: "image" }, { next: img._id })
-                    res.json(img);
-                })
-
+                // Remove the file if it exists
+                try {
+                    if (fs.existsSync('./uploads/' + img.filename)) {
+                        fs.unlinkSync('./uploads/' + img.filename);
+                    }
+                } catch (fileErr) {
+                    console.error('Error deleting file:', fileErr);
+                }
+                serverConfig.update({ _id: "image" }, { next: img._id })
+                res.json(img);
             });
         });
     }
@@ -470,159 +492,13 @@ app.put("/api/imgs/:imgid", verifyToken, function (req, res, next) {
     }
 });
 
-// app.get("/api/comments/", verifyToken, function (req, res, next) {
-//     if (req.user) {
-//         comments.find({}, function (err, comment) {
-//             if (err) return res.status(500).end(err);
-//             return res.json(comment)
-//         })
-//     }
-//     else {
-//         res.redirect('/');
-//     }
-// });
-// app.get("/api/comments/:imageId/:page", verifyToken, function (req, res, next) {
-//     if (req.user) {
-//         let imageid = parseInt(req.params.imageId, 10);
-//         let pageid = parseInt(req.params.page, 10);
-//         images.findOne({ _id: imageid }, function (err, img) {
-//             if (err) return res.status(500).end(err);
-//             if (!img) {
-//                 return res.status(404).end("Image Not Exists!");
-//             }
-//             if (pageid < 0) {
-//                 return res.status(404).end("Invalid Page!");
-//             }
-//             comments.find({ imageid: imageid }).sort({ _id: -1 }).skip(pageid * 10).limit(10).exec(function (err, comment) {
-//                 if (err) return res.status(500).end(err);
-//                 if (!comment) {
-//                     return res.status(404).end("Comments Not Exists!");
-//                 }
-//                 return res.json(comment);
-//             })
-//         })
-//     }
-//     else {
-//         res.redirect('/');
-//     }
-
-// });
-
-// app.post("/api/comments", verifyToken, function (req, res, next) {
-//     if (req.user) {
-//         comments.find({}).sort({ _id: -1 }).limit(1).exec(function (err, comment) {
-//             if (err) return res.status(500).end("Error Getting Last Comment ID");
-//             if (comment.length != 0) {
-//                 imgid = parseInt(req.body.imageid, 10);
-
-//                 images.findOne({ _id: imgid }, function (err, img) {
-//                     if (err) return res.status(500).end(err);
-//                     comments.insert({
-//                         _id: comment[0]._id + 1,
-//                         author: req.body.author,
-//                         comment: req.body.comment,
-//                         imageid: parseInt(req.body.imageid, 10),
-//                         owner_id: req.user._id,
-//                         img_owner_id: img.owner_id,
-//                         date: new Date()
-//                     }, function (err, comment) {
-//                         if (err) return res.status(500).end(err);
-//                         return res.json(comment);
-//                     });
-
-//                 });
-
-
-//             } else {
-//                 imgid = parseInt(req.body.imageid, 10);
-//                 images.findOne({ _id: imgid }, function (err, img) {
-//                     if (err) return res.status(500).end(err);
-//                     comments.insert({
-//                         _id: 1,
-//                         author: req.body.author,
-//                         comment: req.body.comment,
-//                         imageid: parseInt(req.body.imageid, 10),
-//                         owner_id: req.user._id,
-//                         img_owner_id: img.owner_id,
-//                         date: new Date()
-//                     }, function (err, comment) {
-//                         if (err) return res.status(500).end(err);
-//                         return res.json(comment);
-//                     });
-
-//                 });
-
-//             }
-//         });
-//     }
-//     else {
-//         res.redirect('/');
-//     }
-
-// });
-// app.delete("/api/comments/:comid/", verifyToken, function (req, res, next) {
-//     if (req.user) {
-//         comid = parseInt(req.params.comid, 10)
-//         comments.findOne({ _id: comid }, function (err, comment) {
-
-//             if (err) return res.status(500).end(err);
-//             if (!comment) {
-//                 return res.json("")
-//             }
-//             if (JSON.stringify(comment.img_owner_id) === undefined) {
-//                 if ([String(comment.owner_id), String(comment.img_owner_id)].includes(String(req.user._id))) {
-
-
-
-//                     comments.remove({ _id: comment._id }, { multi: false }, function (err, num) {
-//                         if (err) return res.status(500).end(err);
-//                         res.json(comment);
-//                     });
-//                 }
-//             }
-//             else {
-//                 if ([String(comment.owner_id), String(JSON.parse(JSON.stringify(comment.img_owner_id))._id), String(comment.img_owner_id)].includes(String(req.user._id))) {
-
-
-
-//                     comments.remove({ _id: comment._id }, { multi: false }, function (err, num) {
-//                         if (err) return res.status(500).end(err);
-//                         res.json(comment);
-//                     });
-//                 }
-//             }
-//         });
-//     }
-//     else {
-//         res.redirect('/')
-//     }
-// });
-// app.put("/api/comments/:comid", verifyToken, function (req, res, next) {
-
-//     if (req.user) {
-//         comments.findOne({ _id: req.params.comid }, function (err, comment) {
-//             if (err) return res.status(500).end(err);
-//             if (!(comment && (req.user._id === img.owner_id))) {
-//                 return res.status(404).end("Comment Not Exists!");
-//             }
-//             comments.update({ _id: comment._id }, { imageid: req.body.imageid, author: req.body.author, comment: req.body.comment }, { multi: false }, function (err, num) {
-//                 if (err) return res.status(500).end(err);
-//                 comments.findOne({ _id: req.params.comid }, function (err, comment) {
-//                     if (err) return res.status(500).end(err);
-//                     res.json(comment);
-//                 })
-//             });
-//         });
-//     }
-//     else {
-//         res.redirect('/');
-//     }
-// })
 
 app.get("/api/uploads/:filename", function (req, res, next) {
     res.sendFile(path.resolve("./uploads/" + req.params.filename));
 });
+
 app.use(express.static("static"));
+
 app.use(express.static("uploads"));
 
 app.get("/", verifyToken, function (req, res, next) {
@@ -632,9 +508,37 @@ app.get("/", verifyToken, function (req, res, next) {
         res.redirect('login.html');
 });
 
+app.get("/logs", verifyToken, function (req, res, next) {
+    if (req.user)
+        res.sendfile('static/logs.html');
+    else
+        res.redirect('login.html');
+});
+
+app.get("/drop", verifyToken, function (req, res, next) {
+    if (req.user)
+        res.sendfile('static/drop.html');
+    else
+        res.redirect('login.html');
+});
+
 app.get("/api/game/", verifyToken, function (req, res, next) {
     if (req.user)
         res.json({ status: 'ready', gameUrl: '/game.html' });
+    else
+        res.redirect('/');
+});
+
+app.get("/api/spell/", verifyToken, function (req, res, next) {
+    if (req.user)
+        res.json({ status: 'ready', spellUrl: '/spell.html' });
+    else
+        res.redirect('/');
+});
+
+app.get("/api/drop/", verifyToken, function (req, res, next) {
+    if (req.user)
+        res.json({ status: 'ready', dropUrl: '/drop.html' });
     else
         res.redirect('/');
 });
@@ -735,48 +639,320 @@ app.get("/api/debug/config", verifyToken, function (req, res, next) {
     }
 });
 
-// app.js
-app.get("/api/trans/:imgid", verifyToken, async (req, res) => {
-    try {
-        if (!req.user) return res.status(401).end();
+app.get("/api/debug/match-game-logs", verifyToken, function (req, res, next) {
+    if (req.user) {
+        matchGameLogs.find({}).sort({ date: -1 }).exec(function (err, data) {
+            if (err) return res.status(500).end(err);
+            return res.json(data);
+        });
+    } else {
+        res.status(401).json({ error: 'Unauthorized' });
+    }
+});
 
-        const imgid = parseInt(req.params.imgid);
-        const img = await new Promise((resolve, reject) => {
-            images.findOne({ _id: imgid }, (err, doc) => err ? reject(err) : resolve(doc));
+app.get("/api/debug/spelling-game-logs", verifyToken, function (req, res, next) {
+    if (req.user) {
+        spellingGameLogs.find({}).sort({ date: -1 }).exec(function (err, data) {
+            if (err) return res.status(500).end(err);
+            return res.json(data);
+        });
+    } else {
+        res.status(401).json({ error: 'Unauthorized' });
+    }
+});
+
+app.get("/api/user/current", verifyToken, function (req, res, next) {
+    if (req.user) {
+        // Return user info without password
+        res.json({
+            _id: req.user._id,
+            username: req.user.username,
+            createdAt: req.user.createdAt,
+            updatedAt: req.user.updatedAt
+        });
+    } else {
+        res.status(401).json({ error: 'Not authenticated' });
+    }
+});
+
+// Match Game Logging
+app.post("/api/match-game/log", verifyToken, function (req, res, next) {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const { totalQuestions, correctAnswers, incorrectAnswers, completionTime, gameData } = req.body;
+
+    matchGameLogs.count({}, function (err, count) {
+        if (err) return res.status(500).json({ error: err.message });
+
+        const logEntry = {
+            _id: count + 1,
+            userId: req.user._id,
+            username: req.user.username,
+            totalQuestions: totalQuestions || 0,
+            correctAnswers: correctAnswers || 0,
+            incorrectAnswers: incorrectAnswers || 0,
+            score: correctAnswers && totalQuestions ? Math.round((correctAnswers / totalQuestions) * 100) : 0,
+            completionTime: completionTime || null, // in seconds
+            gameData: gameData || null, // detailed game session data
+            gameType: 'match',
+            date: new Date()
+        };
+
+        matchGameLogs.insert(logEntry, function (err, doc) {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json({ success: true, logId: doc._id, score: logEntry.score });
+        });
+    });
+});
+
+// Spelling Game Logging
+app.post("/api/spelling-game/log", verifyToken, function (req, res, next) {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const { totalQuestions, correctAnswers, incorrectAnswers, completionTime, gameData } = req.body;
+
+    spellingGameLogs.count({}, function (err, count) {
+        if (err) return res.status(500).json({ error: err.message });
+
+        const logEntry = {
+            _id: count + 1,
+            userId: req.user._id,
+            username: req.user.username,
+            totalQuestions: totalQuestions || 0,
+            correctAnswers: correctAnswers || 0,
+            incorrectAnswers: incorrectAnswers || 0,
+            score: correctAnswers && totalQuestions ? Math.round((correctAnswers / totalQuestions) * 100) : 0,
+            completionTime: completionTime || null, // in seconds
+            gameData: gameData || null, // detailed game session data
+            gameType: 'spelling',
+            date: new Date()
+        };
+
+        spellingGameLogs.insert(logEntry, function (err, doc) {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json({ success: true, logId: doc._id, score: logEntry.score });
+        });
+    });
+});
+
+// Drop Game Logging
+app.post("/api/drop-game/log", verifyToken, function (req, res, next) {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const { totalQuestions, correctAnswers, incorrectAnswers, completionTime, gameData } = req.body;
+
+    // Find the highest existing ID and increment it
+    dropGameLogs.find({}).sort({ _id: -1 }).limit(1).exec(function (err, docs) {
+        if (err) return res.status(500).json({ error: err.message });
+
+        const nextId = docs.length > 0 ? docs[0]._id + 1 : 1;
+
+        const logEntry = {
+            _id: nextId,
+            userId: req.user._id,
+            username: req.user.username,
+            totalQuestions: totalQuestions || 0,
+            correctAnswers: correctAnswers || 0,
+            incorrectAnswers: incorrectAnswers || 0,
+            score: correctAnswers && totalQuestions ? Math.round((correctAnswers / totalQuestions) * 100) : 0,
+            completionTime: completionTime || null, // in seconds
+            gameData: gameData || null, // detailed game session data
+            gameType: 'drop',
+            date: new Date()
+        };
+
+        dropGameLogs.insert(logEntry, function (err, doc) {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json({ success: true, logId: doc._id, score: logEntry.score });
+        });
+    });
+});
+
+// Update Drop Game Log
+app.put("/api/drop-game/log/:logId", verifyToken, function (req, res, next) {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const logId = parseInt(req.params.logId);
+    const { totalQuestions, correctAnswers, incorrectAnswers, completionTime, gameData, score } = req.body;
+
+    const updateData = {
+        totalQuestions: totalQuestions || 0,
+        correctAnswers: correctAnswers || 0,
+        incorrectAnswers: incorrectAnswers || 0,
+        score: score || 0,
+        completionTime: completionTime || 0,
+        gameData: gameData || null,
+        updatedAt: new Date()
+    };
+
+    dropGameLogs.update({ _id: logId, userId: req.user._id }, { $set: updateData }, {}, function (err, numReplaced) {
+        if (err) return res.status(500).json({ error: err.message });
+        if (numReplaced === 0) {
+            return res.status(404).json({ error: 'Log entry not found or unauthorized' });
+        }
+        res.json({ success: true, logId: logId, updated: true });
+    });
+});
+
+// Cleanup duplicate Drop Game logs (admin endpoint)
+app.post("/api/drop-game/cleanup", verifyToken, function (req, res, next) {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    // Find all entries grouped by ID
+    dropGameLogs.find({}).sort({ _id: 1, updatedAt: -1 }).exec(function (err, allLogs) {
+        if (err) return res.status(500).json({ error: err.message });
+
+        const duplicateGroups = {};
+        const toRemove = [];
+
+        // Group entries by ID
+        allLogs.forEach(log => {
+            if (!duplicateGroups[log._id]) {
+                duplicateGroups[log._id] = [];
+            }
+            duplicateGroups[log._id].push(log);
         });
 
-        if (!img) return res.status(404).end();
+        // For each ID that has duplicates, keep only the most recently updated one
+        Object.keys(duplicateGroups).forEach(id => {
+            const group = duplicateGroups[id];
+            if (group.length > 1) {
+                // Sort by updatedAt (most recent first), then by createdAt
+                group.sort((a, b) => {
+                    const aTime = a.updatedAt || a.createdAt;
+                    const bTime = b.updatedAt || b.createdAt;
+                    return new Date(bTime) - new Date(aTime);
+                });
+                
+                // Mark all but the first (most recent) for removal
+                for (let i = 1; i < group.length; i++) {
+                    toRemove.push(group[i]);
+                }
+            }
+        });
 
-        // Only translate if not already translated
-        if (1 === 1) {
-            const translatedText = await translateText(img.imageName);
-            
-            await new Promise((resolve, reject) => {
-                images.update(
-                    { _id: imgid },
-                    { 
-                        $set: { 
-                            author: translatedText,
-                            translated: true,
-                            translatedAt: new Date() 
-                        }
-                    },
-                    {},
-                    (err, numReplaced) => {
-                        if (err) reject(err);
-                        console.log(`Image ${imgid} updated (translated)`);
-                        resolve();
-                    }
-                );
-            });
+        if (toRemove.length === 0) {
+            return res.json({ success: true, message: 'No duplicates found', removed: 0 });
         }
 
-        res.json(img);
+        // Remove duplicates
+        let removedCount = 0;
+        const removePromises = toRemove.map(log => {
+            return new Promise((resolve) => {
+                dropGameLogs.remove({ _id: log._id, createdAt: log.createdAt }, {}, function (err, numRemoved) {
+                    if (!err && numRemoved > 0) {
+                        removedCount++;
+                    }
+                    resolve();
+                });
+            });
+        });
 
-    } catch (err) {
-        console.error(`Error in /api/trans/${req.params.imgid}:`, err);
-        res.status(500).json({ error: err.message });
+        Promise.all(removePromises).then(() => {
+            res.json({ 
+                success: true, 
+                message: `Cleanup completed. Removed ${removedCount} duplicate entries.`,
+                removed: removedCount 
+            });
+        });
+    });
+});
+
+// Get Match Game Stats
+app.get("/api/match-game/stats/:userId?", verifyToken, function (req, res, next) {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
     }
+
+    const userId = req.params.userId ? parseInt(req.params.userId) : req.user._id;
+    
+    // Only allow users to see their own stats unless admin functionality is added later
+    if (userId !== req.user._id) {
+        return res.status(403).json({ error: 'Access denied' });
+    }
+
+    matchGameLogs.find({ userId: userId }).sort({ date: -1 }).exec(function (err, logs) {
+        if (err) return res.status(500).json({ error: err.message });
+        
+        const stats = {
+            totalGames: logs.length,
+            averageScore: logs.length > 0 ? Math.round(logs.reduce((sum, log) => sum + log.score, 0) / logs.length) : 0,
+            bestScore: logs.length > 0 ? Math.max(...logs.map(log => log.score)) : 0,
+            totalCorrectAnswers: logs.reduce((sum, log) => sum + log.correctAnswers, 0),
+            totalQuestions: logs.reduce((sum, log) => sum + log.totalQuestions, 0),
+            recentGames: logs // All games, sorted by date (newest first)
+        };
+        
+        res.json(stats);
+    });
+});
+
+// Get Spelling Game Stats
+app.get("/api/spelling-game/stats/:userId?", verifyToken, function (req, res, next) {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const userId = req.params.userId ? parseInt(req.params.userId) : req.user._id;
+    
+    // Only allow users to see their own stats unless admin functionality is added later
+    if (userId !== req.user._id) {
+        return res.status(403).json({ error: 'Access denied' });
+    }
+
+    spellingGameLogs.find({ userId: userId }).sort({ date: -1 }).exec(function (err, logs) {
+        if (err) return res.status(500).json({ error: err.message });
+        
+        const stats = {
+            totalGames: logs.length,
+            averageScore: logs.length > 0 ? Math.round(logs.reduce((sum, log) => sum + log.score, 0) / logs.length) : 0,
+            bestScore: logs.length > 0 ? Math.max(...logs.map(log => log.score)) : 0,
+            totalCorrectAnswers: logs.reduce((sum, log) => sum + log.correctAnswers, 0),
+            totalQuestions: logs.reduce((sum, log) => sum + log.totalQuestions, 0),
+            recentGames: logs // All games, sorted by date (newest first)
+        };
+        
+        res.json(stats);
+    });
+});
+
+// Get Drop Game Stats
+app.get("/api/drop-game/stats/:userId?", verifyToken, function (req, res, next) {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const userId = req.params.userId ? parseInt(req.params.userId) : req.user._id;
+    
+    // Only allow users to see their own stats unless admin functionality is added later
+    if (userId !== req.user._id) {
+        return res.status(403).json({ error: 'Access denied' });
+    }
+
+    dropGameLogs.find({ userId: userId }).sort({ date: -1 }).exec(function (err, logs) {
+        if (err) return res.status(500).json({ error: err.message });
+        
+        const stats = {
+            totalGames: logs.length,
+            averageScore: logs.length > 0 ? Math.round(logs.reduce((sum, log) => sum + log.score, 0) / logs.length) : 0,
+            bestScore: logs.length > 0 ? Math.max(...logs.map(log => log.score)) : 0,
+            totalCorrectAnswers: logs.reduce((sum, log) => sum + log.correctAnswers, 0),
+            totalQuestions: logs.reduce((sum, log) => sum + log.totalQuestions, 0),
+            recentGames: logs // All games, sorted by date (newest first)
+        };
+        
+        res.json(stats);
+    });
 });
 
 http.createServer(app).listen(PORT, function (err) {
@@ -787,6 +963,9 @@ http.createServer(app).listen(PORT, function (err) {
         // comments.loadDatabase()
         serverConfig.loadDatabase()
         logs.loadDatabase()
+        matchGameLogs.loadDatabase()
+        spellingGameLogs.loadDatabase()
+        dropGameLogs.loadDatabase()
         serverConfig.count({}, function (err, count) {
             if (err) console.log(err)
             if (count == 0) {

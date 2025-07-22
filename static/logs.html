@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=2">
+  <link href="styles/main.css" rel="stylesheet" type="text/css" />
+  <link href="styles/form.css" rel="stylesheet" type="text/css" />
+  <link href="styles/image.css" rel="stylesheet" type="text/css" />
+  <link href="styles/comment.css" rel="stylesheet" type="text/css" />
+  <!-- Add Google Fonts for better typography -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <title>French Learning Game - Game Logs</title>
+</head>
+
+<body>
+  <header class="modern-header">
+    <div class="header-left">
+      <a href="/" id="title">
+        <i class="fas fa-chart-line"></i>
+        Game Statistics
+      </a>
+    </div>
+    <div class="header-right">
+      <div class="user-info" id="user-info">
+        <div class="user-avatar">
+          <i class="fas fa-user-circle"></i>
+        </div>
+        <div class="user-details">
+          <span class="username" id="current-username">Loading...</span>
+          <span class="user-role">Viewing Stats</span>
+        </div>
+      </div>
+      <form class="logout-form" id="logout-form" action="/logout" method="POST">
+        <button type="submit" class="logout-btn">
+          <i class="fas fa-sign-out-alt"></i>
+          Logout
+        </button>
+      </form>
+    </div>
+  </header>
+
+  <nav class="navigation-bar">
+    <div class="nav-controls">
+      <button id="back-to-gallery-btn" class="nav-btn back-btn">
+        <i class="fas fa-arrow-left"></i>
+        Back to Gallery
+      </button>
+      
+      <button id="refresh-stats-btn" class="nav-btn game-btn">
+        <i class="fas fa-sync-alt"></i>
+        Refresh Stats
+      </button>
+    </div>
+  </nav>
+
+  <main class="main-content">
+    <div class="logs-container">
+      
+      <!-- Match Game Statistics -->
+      <div class="stats-section">
+        <div class="stats-header">
+          <h2 class="stats-title">
+            <i class="fas fa-puzzle-piece"></i>
+            Match Game Statistics
+          </h2>
+        </div>
+        
+        <div class="stats-overview" id="match-stats-overview">
+          <div class="stat-card">
+            <div class="stat-number" id="match-total-games">-</div>
+            <div class="stat-label">Total Games</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="match-average-score">-%</div>
+            <div class="stat-label">Average Score</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="match-best-score">-%</div>
+            <div class="stat-label">Best Score</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="match-total-correct">-</div>
+            <div class="stat-label">Total Correct</div>
+          </div>
+        </div>
+        
+        <div class="recent-games">
+          <h3><i class="fas fa-history"></i> Recent Match Games</h3>
+          <div class="games-list" id="match-recent-games">
+            <div class="loading">Loading match game history...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Spelling Game Statistics -->
+      <div class="stats-section">
+        <div class="stats-header">
+          <h2 class="stats-title">
+            <i class="fas fa-keyboard"></i>
+            Spelling Game Statistics
+          </h2>
+        </div>
+        
+        <div class="stats-overview" id="spelling-stats-overview">
+          <div class="stat-card">
+            <div class="stat-number" id="spelling-total-games">-</div>
+            <div class="stat-label">Total Games</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="spelling-average-score">-%</div>
+            <div class="stat-label">Average Score</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="spelling-best-score">-%</div>
+            <div class="stat-label">Best Score</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="spelling-total-correct">-</div>
+            <div class="stat-label">Total Correct</div>
+          </div>
+        </div>
+        
+        <div class="recent-games">
+          <h3><i class="fas fa-history"></i> Recent Spelling Games</h3>
+          <div class="games-list" id="spelling-recent-games">
+            <div class="loading">Loading spelling game history...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Drop Game Statistics -->
+      <div class="stats-section">
+        <div class="stats-header">
+          <h2 class="stats-title">
+            <i class="fas fa-meteor"></i>
+            Drop Game Statistics
+          </h2>
+        </div>
+        
+        <div class="stats-overview" id="drop-stats-overview">
+          <div class="stat-card">
+            <div class="stat-number" id="drop-total-games">-</div>
+            <div class="stat-label">Total Games</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="drop-average-score">-%</div>
+            <div class="stat-label">Average Score</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="drop-best-score">-%</div>
+            <div class="stat-label">Best Score</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="drop-total-correct">-</div>
+            <div class="stat-label">Total Correct</div>
+          </div>
+        </div>
+        
+        <div class="recent-games">
+          <h3><i class="fas fa-history"></i> Recent Drop Games</h3>
+          <div class="games-list" id="drop-recent-games">
+            <div class="loading">Loading drop game history...</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <div class="error-notification" id="error_box">
+    <i class="fas fa-exclamation-triangle"></i>
+    <span id="error_message"></span>
+    <button class="close-error" id="close-error-btn">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+
+  <footer class="modern-footer">
+    <div class="footer-content">
+      <p>&copy; 2025 French Learning Game</p>
+      <a href="credits.html">
+        <i class="fas fa-info-circle"></i>
+        Credits
+      </a>
+    </div>
+  </footer>
+  
+  <script src="js/api-service.js"></script>
+  <script src="js/logs.js"></script>
+</body>
+
+</html>

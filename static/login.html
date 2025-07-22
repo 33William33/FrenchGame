@@ -5,41 +5,121 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
 
+  <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=2">
   <link href="styles/main.css" rel="stylesheet" type="text/css" />
   <link href="styles/form.css" rel="stylesheet" type="text/css" />
   <link href="styles/image.css" rel="stylesheet" type="text/css" />
   <link href="styles/comment.css" rel="stylesheet" type="text/css" />
-  <title>The Web Gallery</title>
+  <!-- Add Google Fonts for better typography -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <title>French Learning Game - Login</title>
 </head>
 
 <body>
-  <header>
-    <a href="/" id="title">Match Game</a>
+  <header class="modern-header">
+    <div class="header-left">
+      <a href="/" id="title">
+        <i class="fas fa-language"></i>
+        French Learning Game
+      </a>
+    </div>
   </header>
-  <p hidden>
-    <input id="check" />
-  </p>
-  <form class="form" id="signin-form" action="/signin" method="POST">
-    <div id="title-line">
-      <div class="form-title">Sign In!</div>
-    </div>
-    <input type="text" id="username" class="form-format" placeholder="Enter username" name="username" required />
-    <input type="text" id="password" class="form-format" placeholder="Enter password" name="password" required />
-    <button type="submit" class="btn">Login</button>
-  </form>
 
-  <form class="form" id="register-form" action="/register" method="POST">
-    <div id="title-line">
-      <div class="form-title">Sign Up!</div>
+  <main class="login-container">
+    <div class="login-wrapper">
+      <form class="modern-form show" id="signin-form" action="/signin" method="POST">
+        <div class="form-header">
+          <h2>
+            <i class="fas fa-sign-in-alt"></i>
+            Welcome Back!
+          </h2>
+          <p>Sign in to continue your French learning journey</p>
+        </div>
+        
+        <div class="form-group">
+          <label for="signin-username">
+            <i class="fas fa-user"></i>
+            Username
+          </label>
+          <input type="text" id="signin-username" class="modern-input" placeholder="Enter your username" name="username" required />
+        </div>
+        
+        <div class="form-group">
+          <label for="signin-password">
+            <i class="fas fa-lock"></i>
+            Password
+          </label>
+          <input type="password" id="signin-password" class="modern-input" placeholder="Enter your password" name="password" required />
+        </div>
+        
+        <button type="submit" class="submit-btn">
+          <i class="fas fa-sign-in-alt"></i>
+          Sign In
+        </button>
+      </form>
+
+      <div class="divider">
+        <span>or</span>
+      </div>
+
+      <div class="toggle-section">
+        <button type="button" id="show-register-btn" class="toggle-btn">
+          <i class="fas fa-user-plus"></i>
+          Don't have an account? Create one
+        </button>
+        <button type="button" id="show-signin-btn" class="toggle-btn" style="display: none;">
+          <i class="fas fa-sign-in-alt"></i>
+          Already have an account? Sign in
+        </button>
+      </div>
+
+      <form class="modern-form" id="register-form" action="/register" method="POST">
+        <div class="form-header">
+          <h2>
+            <i class="fas fa-user-plus"></i>
+            Create Account
+          </h2>
+          <p>Join us and start learning French with AI-generated images</p>
+        </div>
+        
+        <div class="form-group">
+          <label for="register-username">
+            <i class="fas fa-user"></i>
+            Username
+          </label>
+          <input type="text" id="register-username" class="modern-input" placeholder="Choose a username" name="username" required />
+        </div>
+        
+        <div class="form-group">
+          <label for="register-password">
+            <i class="fas fa-lock"></i>
+            Password
+          </label>
+          <input type="password" id="register-password" class="modern-input" placeholder="Choose a password" name="password" required />
+        </div>
+        
+        <button type="submit" class="submit-btn">
+          <i class="fas fa-user-plus"></i>
+          Create Account
+        </button>
+      </form>
     </div>
-    <input type="text" id="username" class="form-format" placeholder="Enter username" name="username" required />
-    <input type="text" id="password" class="form-format" placeholder="Enter password" name="password" required />
-    <button type="submit" class="btn">Sign Up</button>
-  </form>
-  <footer>
-    <a href="credits.html">credits</a>
+  </main>
+
+  <footer class="modern-footer">
+    <div class="footer-content">
+      <p>&copy; 2025 French Learning Game</p>
+      <a href="credits.html">
+        <i class="fas fa-info-circle"></i>
+        Credits
+      </a>
+    </div>
   </footer>
+  
   <script src="js/api-service.js"></script>
+  <script src="js/login.js"></script>
 </body>
 
 </html>

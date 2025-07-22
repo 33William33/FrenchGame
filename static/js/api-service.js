@@ -110,6 +110,28 @@ let apiService = (function () {
     module.translate = function (imageId) {
         send("GET", "/api/trans/" + imageId);
     };
+
+    // Get current user information
+    module.getCurrentUser = function(callback) {
+        send("GET", "/api/user/current", null, callback);
+    };
+
+    // Log drop word game session
+    module.logDropGame = function(gameData, callback) {
+        send("POST", "/api/drop-game/log", gameData, callback);
+    };
+
+    // Update drop word game session
+    module.updateDropGame = function(logId, gameData, callback) {
+        send("PUT", "/api/drop-game/log/" + logId, gameData, callback);
+    };
+
+    // Get drop word game statistics
+    module.getDropGameStats = function(userId, callback) {
+        const url = userId ? `/api/drop-game/stats/${userId}` : '/api/drop-game/stats';
+        send("GET", url, null, callback);
+    };
+
     // // get image comments
     // module.getComments = function(imageId, page, callback) {
     //     send("GET", "/api/comments/" + imageId + "/" +

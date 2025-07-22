@@ -2,41 +2,103 @@
 <html>
 
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
 
-    <link href="styles/main.css" rel="stylesheet" type="text/css" />
-    <link href="styles/form.css" rel="stylesheet" type="text/css" />
-    <link href="styles/image.css" rel="stylesheet" type="text/css" />
-    <link href="styles/comment.css" rel="stylesheet" type="text/css" />
-    <title>Match Game</title>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=2">
+  <link href="styles/main.css" rel="stylesheet" type="text/css" />
+  <link href="styles/form.css" rel="stylesheet" type="text/css" />
+  <link href="styles/image.css" rel="stylesheet" type="text/css" />
+  <link href="styles/comment.css" rel="stylesheet" type="text/css" />
+  <!-- Add Google Fonts for better typography -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <title>French Learning Game - Spell Game</title>
 </head>
 
 <body>
-    <header>
-        <a href="/" id="title">Match Game</a>
-    </header>
-    <label type="submit" id="bc" class="switch">
-        Back
-    </label>
-    <label type="submit" id="ng" class="switch">
+  <header class="modern-header">
+    <div class="header-left">
+      <a href="/" id="title">
+        <i class="fas fa-spell-check"></i>
+        French Spelling Game
+      </a>
+    </div>
+    <div class="header-right">
+      <div class="user-info" id="user-info">
+        <div class="user-avatar">
+          <i class="fas fa-user-circle"></i>
+        </div>
+        <div class="user-details">
+          <span class="username" id="current-username">Loading...</span>
+          <span class="user-role">Spelling Practice</span>
+        </div>
+      </div>
+      <button id="spell-logs-btn" class="logs-btn">
+        <i class="fas fa-chart-line"></i>
+        My Stats
+      </button>
+      <form class="logout-form" id="logout-form" action="/logout" method="POST">
+        <button type="submit" class="logout-btn">
+          <i class="fas fa-sign-out-alt"></i>
+          Logout
+        </button>
+      </form>
+    </div>
+  </header>
+
+  <nav class="navigation-bar">
+    <div class="nav-controls">
+      <button id="bc" class="nav-btn back-btn">
+        <i class="fas fa-arrow-left"></i>
+        Back to Gallery
+      </button>
+      
+      <button id="ng" class="nav-btn game-btn">
+        <i class="fas fa-redo"></i>
         New Game
-    </label>
-    <form class="form" id="logout-form" action="/logout" method="POST">
-        <button type="submit" class="btn">Logout</button>
-    </form>
+      </button>
+    </div>
+  </nav>
 
-    <div id="show"></div>
-    <div id="display"></div>
-    <div id="comt-form"></div>
-    <div id="comments"></div>
-    <p id="error_box"></p>
+  <main class="main-content game-content">
+    <div class="game-container">
+      <div class="game-header">
+        <h1 class="game-title">
+          <i class="fas fa-keyboard"></i>
+          French Spelling Challenge
+        </h1>
+        <p class="game-description">Look at the image and spell the French word correctly!</p>
+      </div>
+      
+      <div class="game-area">
+        <div id="show"></div>
+        <div id="display" class="game-display"></div>
+      </div>
+    </div>
+  </main>
 
-    <footer>
-        <a href="credits.html">credits</a>
-    </footer>
-    <script src="js/api-service.js"></script>
-    <script src="js/spell.js"></script>
+  <div class="error-notification" id="error_box">
+    <i class="fas fa-exclamation-triangle"></i>
+    <span id="error_message"></span>
+    <button class="close-error" onclick="this.parentElement.style.display='none'">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+
+  <footer class="modern-footer">
+    <div class="footer-content">
+      <p>&copy; 2025 French Learning Game</p>
+      <a href="credits.html">
+        <i class="fas fa-info-circle"></i>
+        Credits
+      </a>
+    </div>
+  </footer>
+  
+  <script src="js/api-service.js"></script>
+  <script src="js/spell.js"></script>
 </body>
 
 </html>

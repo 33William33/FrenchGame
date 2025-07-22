@@ -1,14 +1,26 @@
 //closure of index
 let spell = (function () {
     "use strict";
+    
+    // Game tracking variables
+    let gameSession = {
+        startTime: null,
+        totalQuestions: 0,
+        correctAnswers: 0,
+        incorrectAnswers: 0,
+        questionsData: []
+    };
+    
     window.addEventListener("load", function () {
 
         function onError(err) {
             console.error("[error]", err);
-            let error_box = document.querySelector("#error_box");
-            error_box.innerHTML = err;
-            error_box.style.visibility = "visible";
-            alert(err)
+            const errorBox = document.querySelector("#error_box");
+            const errorMessage = document.querySelector("#error_message");
+            if (errorBox && errorMessage) {
+                errorMessage.textContent = err;
+                errorBox.style.display = "flex";
+            }
         }
 
         function generateRandomList(n) {
@@ -35,9 +47,6 @@ let spell = (function () {
         async function createImage(id, url) {
             // Clear previous content
             document.getElementById("display").innerHTML = "";
-            document.getElementById("comt-form").innerHTML = "";
-            document.getElementById("comments").innerHTML = "";
-
             try {
                 // Get correct answer from API
                 const img = await new Promise((resolve, reject) => {
@@ -91,8 +100,28 @@ let spell = (function () {
                 form.addEventListener('submit', (e) => {
                     e.preventDefault();
                     const userAnswer = input.value.toLowerCase().trim();
+                    const isCorrect = userAnswer === correctFrenchWord;
 
-                    if (userAnswer === correctFrenchWord) {
+                    // Track the answer
+                    if (isCorrect) {
+                        gameSession.correctAnswers++;
+                    } else {
+                        gameSession.incorrectAnswers++;
+                    }
+                    
+                    // Store question data
+                    gameSession.questionsData.push({
+                        questionId: id,
+                        englishWord: img.imageName,
+                        correctAnswer: correctFrenchWord,
+                        userAnswer: userAnswer,
+                        isCorrect: isCorrect,
+                        timestamp: new Date()
+                    });
+                    
+                    gameSession.totalQuestions = gameSession.correctAnswers + gameSession.incorrectAnswers;
+
+                    if (isCorrect) {
                         feedback.textContent = "Correct! 🎉";
                         feedback.style.color = 'green';
                     } else {
@@ -102,6 +131,20 @@ let spell = (function () {
 
                     // Clear input after check
                     input.value = '';
+                    
+                    // Check if this was the last question in the set
+                    const currentIndex = JSON.parse(localStorage.getItem('index1')) || 0;
+                    const randomList = JSON.parse(localStorage.getItem('random_list1')) || [];
+                    
+                    if (currentIndex + 1 >= randomList.length) {
+                        // This was the last question, show completion message after delay
+                        setTimeout(() => {
+                            if (gameSession.totalQuestions > 0) {
+                                logGameSession();
+                                alert(`Spelling Game Completed!\n\nFinal Score: ${gameSession.correctAnswers}/${gameSession.totalQuestions} (${Math.round((gameSession.correctAnswers/gameSession.totalQuestions)*100)}%)\n\nClick "New Game" to play again!`);
+                            }
+                        }, 2000); // 2 second delay to show feedback
+                    }
                 });
 
                 // Append to DOM
@@ -117,6 +160,20 @@ let spell = (function () {
                 });
                 nextBtn.addEventListener('click', () => {
                     const index = JSON.parse(localStorage.getItem('index1')) || 0;
+                    const randomList = JSON.parse(localStorage.getItem('random_list1')) || [];
+                    
+                    // Check if we've reached the end of the game
+                    if (index + 1 >= randomList.length) {
+                        // Game completed, log the session
+                        if (gameSession.totalQuestions > 0) {
+                            logGameSession();
+                            alert(`Spelling Game Completed!\n\nScore: ${gameSession.correctAnswers}/${gameSession.totalQuestions} (${Math.round((gameSession.correctAnswers/gameSession.totalQuestions)*100)}%)\n\nStarting a new game...`);
+                        }
+                        // Start a new game
+                        newGame();
+                        return;
+                    }
+                    
                     displayImage(index + 1);
                     localStorage.setItem('index1', JSON.stringify(index + 1));
                 });
@@ -129,6 +186,18 @@ let spell = (function () {
         async function displayImage(index) {
             if (index >= 0) {
                 let l = JSON.parse(localStorage.getItem('random_list1'));
+                
+                // Check if we've gone beyond the available questions
+                if (index >= l.length) {
+                    // Game completed
+                    if (gameSession.totalQuestions > 0) {
+                        logGameSession();
+                        alert(`Spelling Game Completed!\n\nScore: ${gameSession.correctAnswers}/${gameSession.totalQuestions} (${Math.round((gameSession.correctAnswers/gameSession.totalQuestions)*100)}%)\n\nStarting a new game...`);
+                    }
+                    newGame();
+                    return;
+                }
+                
                 let imgid = l[index];
                 apiService.getGraph(imgid, function (err, img) {
                     if (err) {
@@ -138,15 +207,12 @@ let spell = (function () {
                     } else {
                         createImage(img._id, img.url)
                     }
-
                 })
             }
         }
 
         function setEmptyImage() {
             document.getElementById("display").innerHTML = ""
-            document.getElementById("comt-form").innerHTML = ""
-            document.getElementById("comments").innerHTML = ""
             let elmt = document.createElement("div");
             elmt.className = "img-format";
             elmt.innerHTML = `<div class="img-element">
@@ -179,8 +245,64 @@ let spell = (function () {
             });
         }
 
+        // Game logging functions
+        function logGameSession() {
+            if (gameSession.totalQuestions === 0) return; // No questions answered
+            
+            const completionTime = gameSession.startTime ? 
+                Math.round((new Date().getTime() - gameSession.startTime.getTime()) / 1000) : null;
+            
+            const logData = {
+                totalQuestions: gameSession.totalQuestions,
+                correctAnswers: gameSession.correctAnswers,
+                incorrectAnswers: gameSession.incorrectAnswers,
+                completionTime: completionTime,
+                gameData: {
+                    questions: gameSession.questionsData,
+                    gameType: 'spelling'
+                }
+            };
+            
+            fetch('/api/spelling-game/log', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(logData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('Spelling game session logged successfully. Score:', data.score + '%');
+                } else {
+                    console.error('Error logging spelling game session:', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error logging spelling game session:', error);
+            });
+        }
+        
+        function initializeGameSession() {
+            gameSession = {
+                startTime: new Date(),
+                totalQuestions: 0,
+                correctAnswers: 0,
+                incorrectAnswers: 0,
+                questionsData: []
+            };
+        }
+
         async function newGame() {
             try {
+                // Log previous session if it exists
+                if (gameSession.totalQuestions > 0) {
+                    logGameSession();
+                }
+                
+                // Initialize new session
+                initializeGameSession();
+                
                 localStorage.setItem('index1', JSON.stringify(0));
                 apiService.getGraphs(function (err, imgts) {
                     if (err) return onError(err);
@@ -193,6 +315,10 @@ let spell = (function () {
         }
         async function back() {
             try {
+                // Log current session before leaving
+                if (gameSession.totalQuestions > 0) {
+                    logGameSession();
+                }
                 window.location.href = '/';
             } catch (error) {
                 return onError(error);
@@ -203,7 +329,34 @@ let spell = (function () {
         document.getElementById("bc").addEventListener('click', back);
         document.getElementById("ng").addEventListener('click', newGame);
 
+        // Add event listener for logs button
+        const spellLogsBtn = document.getElementById('spell-logs-btn');
+        if (spellLogsBtn) {
+            spellLogsBtn.addEventListener('click', function() {
+                window.location.href = '/logs';
+            });
+        }
+
+        // Load user information
+        function loadUserInfo() {
+            apiService.getCurrentUser(function(err, user) {
+                if (err) {
+                    console.error('Error loading user info:', err);
+                    document.getElementById('current-username').textContent = 'User';
+                    return;
+                }
+                document.getElementById('current-username').textContent = user.username || 'User';
+            });
+        }
+
+        // Load user info on page load
+        loadUserInfo();
+
         (function refresh() {
+            // Initialize game session if starting fresh
+            if (!gameSession.startTime) {
+                initializeGameSession();
+            }
 
             let storedList = JSON.parse(localStorage.getItem('random_list1')) || null;
             let idx = JSON.parse(localStorage.getItem('index1')) || null;

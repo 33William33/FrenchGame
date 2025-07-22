@@ -5,64 +5,190 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
 
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=2">
     <link href="styles/main.css" rel="stylesheet" type="text/css" />
     <link href="styles/form.css" rel="stylesheet" type="text/css" />
     <link href="styles/image.css" rel="stylesheet" type="text/css" />
     <link href="styles/comment.css" rel="stylesheet" type="text/css" />
-    <title>Match Game</title>
+    <!-- Add Google Fonts for better typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <title>French Learning Game</title>
 </head>
 
 <body>
-    <header>
-        <a href="/" id="title">Match Game</a>
+    <header class="modern-header">
+        <div class="header-left">
+            <a href="/" id="title">
+                <i class="fas fa-language"></i>
+                French Learning Game
+            </a>
+        </div>
+        <div class="header-right">
+            <div class="user-info" id="user-info">
+                <div class="user-avatar">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <div class="user-details">
+                    <span class="username" id="current-username">Loading...</span>
+                    <span class="user-role">Student</span>
+                </div>
+            </div>
+            <button id="logs-btn" class="logs-btn">
+                <i class="fas fa-chart-line"></i>
+                My Stats
+            </button>
+            <form class="logout-form" id="logout-form" action="/logout" method="POST">
+                <button type="submit" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </button>
+            </form>
+        </div>
     </header>
-    <label type="submit" class="switch">
-      <input id="check" type="checkbox" />Toggle</label
-    >
-    <!-- <label type="submit" id="trans" class="switch">
-      Translate All
-    </label> -->
 
-    <label type="submit" id="game"  class="switch">
-      Game
-    </label>
-    <label type="submit" id="spell"  class="switch">
-      Spell
-    </label>
-    <form class="form" id="logout-form" action="/logout" method="POST">
-      <button type="submit" class="btn">Logout</button>
-    </form>
-    <form class="form" id="create-add-form" >
-      <div id="title-line">
-        <div class="form-title">Add your image</div>
-      </div>
-      <input
-        type="text"
-        id="image-title"
-        class="form-format"
-        placeholder="Enter English word"
-        name="title"
-        required
-      />
-      <input
-        type="text"
-        id="author-name"
-        class="form-format"
-        placeholder="Enter French word"
-        name="author"
-        required
-      />
-      <button type="submit" class="btn">Add</button>
-    </form>
+    <nav class="navigation-bar">
+        <div class="nav-controls">
+            <label class="toggle-switch">
+                <input id="check" type="checkbox" />
+                <span class="slider">
+                    <i class="fas fa-plus"></i>
+                    Toggle Add Form
+                </span>
+            </label>
+            
+            <button id="game" class="nav-btn game-btn">
+                <i class="fas fa-gamepad"></i>
+                Play Match Game
+            </button>
+            
+            <button id="spell" class="nav-btn spell-btn">
+                <i class="fas fa-spell-check"></i>
+                Spelling Practice
+            </button>
+            
+            <button id="drop-game" class="nav-btn drop-btn">
+                <i class="fas fa-meteor"></i>
+                Drop Word Game
+            </button>
+        </div>
+    </nav>
+    <main class="main-content">
+        <div class="content-container">
+            <form class="modern-form" id="create-add-form">
+                <div class="form-header">
+                    <h2>
+                        <i class="fas fa-plus-circle"></i>
+                        Add New Word Pair
+                    </h2>
+                    <p>Create a new English-French word pair with AI-generated image</p>
+                </div>
+                
+                <div class="form-group">
+                    <label for="image-title">
+                        <i class="fas fa-flag-usa"></i>
+                        English Word
+                    </label>
+                    <input
+                        type="text"
+                        id="image-title"
+                        class="modern-input"
+                        placeholder="e.g., Apple, House, Car..."
+                        name="title"
+                        required
+                    />
+                </div>
+                
+                <div class="form-group">
+                    <label for="author-name">
+                        <i class="fas fa-flag"></i>
+                        French Translation
+                    </label>
+                    <input
+                        type="text"
+                        id="author-name"
+                        class="modern-input"
+                        placeholder="e.g., Pomme, Maison, Voiture..."
+                        name="author"
+                        required
+                    />
+                </div>
+                
+                <button type="submit" class="submit-btn">
+                    <i class="fas fa-magic"></i>
+                    Generate & Add
+                </button>
+            </form>
 
-    <div id="show"></div>
-    <div id="display"></div>
-    <div id="comt-form"></div>
-    <div id="comments"></div>
-    <p id="error_box"></p>
+            <div class="image-display-area">
+                <div id="display" class="image-container"></div>
+            </div>
+        </div>
+    </main>
 
-    <footer>
-      <a href="credits.html">credits</a>
+    <div class="error-notification" id="error_box">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span id="error_message"></span>
+        <button class="close-error" onclick="this.parentElement.style.display='none'">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <!-- Image Modal -->
+    <div class="image-modal" id="imageModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <i class="fas fa-expand-alt"></i>
+                    <span id="modalTitle">Image Details</span>
+                </div>
+                <button class="modal-close" id="modalClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-image-container">
+                <img class="modal-image" id="modalImage" src="" alt="">
+            </div>
+            
+            <div class="modal-info">
+                <div class="modal-word-pair">
+                    <div class="word-display word-english" id="modalEnglish">
+                        English Word
+                    </div>
+                    <div class="word-display word-french" id="modalFrench">
+                        French Word
+                    </div>
+                </div>
+                
+                <div class="modal-meta">
+                    <div class="modal-date" id="modalDate">
+                        Created: --
+                    </div>
+                    <div class="modal-actions">
+                        <button class="modal-action-btn" id="modalEdit">
+                            <i class="fas fa-edit"></i>
+                            Edit
+                        </button>
+                        <button class="modal-action-btn delete" id="modalDelete">
+                            <i class="fas fa-trash"></i>
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="modern-footer">
+        <div class="footer-content">
+            <p>&copy; 2025 French Learning Game</p>
+            <a href="credits.html">
+                <i class="fas fa-info-circle"></i>
+                Credits
+            </a>
+        </div>
     </footer>
     <script src="js/api-service.js"></script>
     <script src="js/index.js"></script>

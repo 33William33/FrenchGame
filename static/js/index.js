@@ -5,19 +5,126 @@ let index = (function () {
         function onError(err) {
             console.error("[error]", err);
             let error_box = document.querySelector("#error_box");
-            error_box.innerHTML = err;
-            error_box.style.visibility = "visible";
-            alert(err)
+            let error_message = document.querySelector("#error_message");
+            error_message.textContent = err;
+            error_box.style.display = "flex";
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                error_box.style.display = "none";
+            }, 5000);
+        }
+
+        // Function to load and display current user information
+        function loadUserInfo() {
+            apiService.getCurrentUser(function (err, user) {
+                if (err) {
+                    console.error("Failed to load user info:", err);
+                    return;
+                }
+                
+                const usernameElement = document.getElementById("current-username");
+                if (usernameElement && user) {
+                    usernameElement.textContent = user.username;
+                    
+                    // Add user info to user details
+                    const userDetails = document.querySelector('.user-details');
+                    if (userDetails) {
+                        // Add join date info
+                        const joinDate = new Date(user.createdAt).toLocaleDateString();
+                        const existingRole = userDetails.querySelector('.user-role');
+                        if (existingRole) {
+                            existingRole.textContent = `Joined ${joinDate}`;
+                        }
+                    }
+                }
+            });
+        }
+
+        // Image Modal Functions
+        function openImageModal(imageData) {
+            const modal = document.getElementById('imageModal');
+            const modalImage = document.getElementById('modalImage');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalEnglish = document.getElementById('modalEnglish');
+            const modalFrench = document.getElementById('modalFrench');
+            const modalDate = document.getElementById('modalDate');
+            const modalEdit = document.getElementById('modalEdit');
+            const modalDelete = document.getElementById('modalDelete');
+
+            // Populate modal with image data
+            modalImage.src = imageData.url;
+            modalTitle.textContent = `${imageData.imageName} - ${imageData.author}`;
+            modalEnglish.textContent = imageData.imageName;
+            modalFrench.textContent = imageData.author;
+            
+            // Format date
+            const dateStr = new Date(imageData.date).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            modalDate.textContent = `Created: ${dateStr}`;
+
+            // Set up action buttons
+            modalEdit.onclick = function() {
+                // TODO: Implement edit functionality
+                closeImageModal();
+                onError('Edit functionality coming soon!');
+            };
+
+            modalDelete.onclick = function() {
+                if (confirm(`Are you sure you want to delete "${imageData.imageName}"?`)) {
+                    apiService.deleteImage(imageData._id, function (err, res) {
+                        if (err) return onError(err);
+                        closeImageModal();
+                        updateGraph();
+                    });
+                }
+            };
+
+            // Show modal
+            modal.classList.add('show');
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        }
+
+        function closeImageModal() {
+            const modal = document.getElementById('imageModal');
+            modal.classList.remove('show');
+            document.body.style.overflow = ''; // Restore scrolling
+        }
+
+        // Set up modal close handlers
+        function setupModalHandlers() {
+            const modal = document.getElementById('imageModal');
+            const modalClose = document.getElementById('modalClose');
+
+            // Close button
+            modalClose.addEventListener('click', closeImageModal);
+
+            // Click outside modal to close
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeImageModal();
+                }
+            });
+
+            // ESC key to close
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && modal.classList.contains('show')) {
+                    closeImageModal();
+                }
+            });
         }
 
         async function createImage(title, id, author, url) {
             document.getElementById("display").innerHTML = ""
-            document.getElementById("comt-form").innerHTML = ""
-            document.getElementById("comments").innerHTML = ""
             let elmt = document.createElement("div");
             elmt.className = "img-format";
             elmt.innerHTML = `<div class="img-element">
-                              <div class="img-title">English:${title}</div>
+                              <div class="img-title">English: ${title}</div>
                               <div class= "control">
                               <div class="left-icon icon"></div>
                               <div id="imageId" class="hide">${id}</div>
@@ -25,10 +132,27 @@ let index = (function () {
                               <div class="right-icon icon"></div>
                               </div>
                               <div class="below">
-                              <div class="img-username">French:${author}</div>
+                              <div class="img-username">French: ${author}</div>
                               <div class="delete-icon icon"></div>
                               </div>
                               </div>`;
+            
+            // Add click handler for image maximization
+            const imgElement = elmt.querySelector(".img-picture");
+            imgElement.addEventListener("click", function(e) {
+                // Stop event propagation to prevent navigation
+                e.stopPropagation();
+                
+                // Get image data and open modal
+                apiService.getGraph(id, function (err, img) {
+                    if (err) {
+                        onError("Failed to load image details");
+                    } else {
+                        openImageModal(img);
+                    }
+                });
+            });
+            
             elmt
                 .querySelector(".left-icon")
                 .addEventListener("click", function (e) {
@@ -61,79 +185,8 @@ let index = (function () {
         }
 
 
-        // function createCmtForm(id) {
-        //     let elmt = document.createElement("div");
-        //     elmt.className = "cmt-form-format";
-        //     elmt.innerHTML = `<form class="form" id="create-comm-form" action="/api/comments/" method="POST" enctype="multipart/form-data">
-        //                     <button type="submit" class="btn">Add your comment</button>
-        //                     <input
-        //                     type="text"
-        //                     id="author"
-        //                     class="form-format"
-        //                     placeholder="Enter your name"
-        //                     name="author"
-        //                     required
-        //                     />
-        //                     <input
-        //                     type="text"
-        //                     id="comment"
-        //                     class="form-format"
-        //                     name="comment"
-        //                     placeholder="Enter your comment"
-        //                     required
-        //                     />
-        //                     <input
-        //                     type="text"
-        //                     id="imageid"
-        //                     class="form-format"
-        //                     name="imageid"
-        //                     value="${id}"
-        //                     hidden
-        //                     />
-        //                     </form>`;
-        //     document.querySelector("#comt-form").prepend(elmt);
-        //     document
-        //         .getElementById("create-comm-form")
-        //         .addEventListener("submit", function(e) {
-        //             e.preventDefault();
-        //             let author = document.getElementById("author").value;
-        //             let comment = document.getElementById("comment").value;
-        //             let imgid = document.getElementById("imageid").value;
-        //             apiService.addComment(imgid, author, comment, function(err, comment) {
-        //                 if (err) return onError(err)
-        //                 document.getElementById("author").value = ""
-        //                 document.getElementById("comment").value = ""
-        //                 updateComments(imgid, 0)
-        //             });
-
-        //         });
-        // }
-
-        // function createComment(imgid, id, author, comment, date) {
-        //     let elmt = document.createElement("div");
-        //     elmt.className = "cmt";
-        //     elmt.id = "cmt" + id;
-        //     elmt.innerHTML = `<div class="cmt-author">${author}:</div>
-        //                     <div class="cmt-content">${comment}</div>
-        //                     <div class="time-below">
-        //                     <div class="cmt-time">${date}</div>
-        //                     <div class="comid hide">${id}</div>
-        //                     <div class="delete-cmt icon"></div>
-        //                     </div>`;
-        //     elmt
-        //         .querySelector(".delete-cmt")
-        //         .addEventListener("click", function(e) {
-        //             apiService.deleteComment(id, function(err, comment) {
-        //                 if (err) return onError(err)
-        //             });
-        //             updateComments(imgid, 0);
-        //         });
-        //     return elmt;
-        // }
 
         function setEmptyImage(id) {
-            document.getElementById("display").innerHTML = ""
-            document.getElementById("comt-form").innerHTML = ""
             document.getElementById("comments").innerHTML = ""
             let elmt = document.createElement("div");
             elmt.className = "img-format";
@@ -191,8 +244,6 @@ let index = (function () {
 
                 } else {
                     document.getElementById("display").innerHTML = ""
-                    // document.getElementById("comt-form").innerHTML = ""
-                    // document.getElementById("comments").innerHTML = ""
                 }
             });
         }
@@ -220,6 +271,14 @@ let index = (function () {
         async function initializeSpell() {
             try {
                 window.location.href = '/spell.html';
+            } catch (error) {
+                return onError(error);
+            }
+        }
+
+        async function initializeDropGame() {
+            try {
+                window.location.href = '/drop.html';
             } catch (error) {
                 return onError(error);
             }
@@ -269,19 +328,19 @@ let index = (function () {
             let check = document.getElementById("check");
             let elmt = document.getElementById("create-add-form");
             if (check.checked) {
-                elmt.style.display = "none";
+                elmt.classList.add("show");
+                elmt.style.display = "block";
             } else {
-                elmt.style.display = "flex";
+                elmt.classList.remove("show");
+                elmt.style.display = "none";
             }
         });
-
-        // document.getElementById("trans").addEventListener("click", function (e) {
-        //     translate();
-        // });
 
         document.getElementById("game").addEventListener('click', initializeGame);
 
         document.getElementById("spell").addEventListener('click', initializeSpell);
+
+        document.getElementById("drop-game").addEventListener('click', initializeDropGame);
 
         document
             .getElementById("create-add-form")
@@ -296,7 +355,21 @@ let index = (function () {
             });
 
         (function refresh() {
-
+            // Load user information
+            loadUserInfo();
+            
+            // Setup modal handlers
+            setupModalHandlers();
+            
+            // Add event listener for logs button
+            const logsBtn = document.getElementById('logs-btn');
+            if (logsBtn) {
+                logsBtn.addEventListener('click', function() {
+                    window.location.href = '/logs';
+                });
+            }
+            
+            // Load images
             updateGraph();
             //setTimeout(refresh, 5000);
         }());
