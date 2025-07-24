@@ -121,9 +121,17 @@ let index = (function () {
 
         async function createImage(title, id, author, url) {
             document.getElementById("display").innerHTML = ""
+            
+            // Calculate level based on image ID (groups of 30)
+            const level = Math.floor((id - 1) / 30) + 1;
+            
             let elmt = document.createElement("div");
             elmt.className = "img-format";
             elmt.innerHTML = `<div class="img-element">
+                              <div class="img-metadata">
+                                  <div class="img-id">📌 #${id}</div>
+                                  <div class="img-level">🎯 Level: ${level}</div>
+                              </div>
                               <div class="img-title">🍔English: ${title}</div>
                               <div class= "control">
                               <div class="left-icon icon"></div>

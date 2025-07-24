@@ -18,7 +18,8 @@ let dropGame = (function() {
         wordsPerBatch: 5,
         allGameWords: [], // All words for the entire session
         gameCompleted: false,
-        currentLogId: null // Track current log entry for updates
+        currentLogId: null, // Track current log entry for updates
+        questionResults: [] // Track individual question results
     };
 
     // This will be populated from the database
@@ -61,7 +62,7 @@ let dropGame = (function() {
         const levelSelectBtn = document.getElementById('level-select-btn');
         if (levelSelectBtn) {
             levelSelectBtn.addEventListener('click', function() {
-                window.location.href = '/group-select.html?game=spell';
+                window.location.href = '/group-select.html?game=drop&returnTo=drop';
             });
         }
 
@@ -73,18 +74,54 @@ let dropGame = (function() {
 
         playAgainBtn.addEventListener('click', function() {
             hideGameOverModal();
-            restartGame();
+            newGame(); // Use newGame instead of restartGame to get fresh level data
         });
 
         backToMenuBtn.addEventListener('click', function() {
             window.location.href = '/';
         });
 
+        // Add event listener for new game button if it exists
+        const newGameBtn = document.getElementById('ng');
+        if (newGameBtn) {
+            newGameBtn.addEventListener('click', newGame);
+        }
+
         // Load user info
         loadUserInfo();
 
         // Load vocabulary from database
         function loadVocabulary() {
+            // Use LevelManager if available
+            if (typeof LevelManager !== 'undefined') {
+                // Initialize for drop game
+                if (!LevelManager.initializeLevel('drop')) {
+                    return; // Will redirect to level selection if needed
+                }
+                
+                // Get level data and use level-specific images
+                const levelData = LevelManager.getLevelData();
+                if (levelData && levelData.images) {
+                    // Convert level images to vocabulary format
+                    VOCABULARY = levelData.images.map(image => ({
+                        english: image.imageName,
+                        french: image.author
+                    }));
+                    
+                    console.log('Loaded level-specific vocabulary:', VOCABULARY.length, 'words from level', levelData.groupIndex + 1);
+                    
+                    // Enable the start button
+                    const startBtn = document.getElementById('start-game-btn');
+                    if (startBtn) {
+                        startBtn.disabled = false;
+                        startBtn.textContent = 'Start Game';
+                    }
+                    
+                    return;
+                }
+            }
+            
+            // Fallback to loading all images if LevelManager not available
             apiService.getGraphs(function(err, images) {
                 if (err) {
                     console.error('Error loading vocabulary:', err);
@@ -117,6 +154,163 @@ let dropGame = (function() {
                 [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
             }
             return shuffled;
+        }
+
+        // New game function that resets everything for a fresh start
+        function newGame() {
+            // Clear any drop game specific data
+            localStorage.removeItem('drop_game_data');
+            
+            // Use LevelManager if available to start a new game
+            if (typeof LevelManager !== 'undefined') {
+                // Start new drop game
+                LevelManager.startNewGame('drop');
+                
+                console.log('Drop game new game started with level:', LevelManager.getCurrentLevelInfo());
+            }
+            
+            // Reload vocabulary for the new game/level and prepare for user to start
+            loadVocabularyAndStart();
+        }
+
+        // Function to load vocabulary and prepare for new game
+        function loadVocabularyAndStart() {
+            // Use LevelManager if available
+            if (typeof LevelManager !== 'undefined') {
+                // Initialize for drop game
+                if (!LevelManager.initializeLevel('drop')) {
+                    return; // Will redirect to level selection if needed
+                }
+                
+                // Get level data and use level-specific images
+                const levelData = LevelManager.getLevelData();
+                if (levelData && levelData.images) {
+                    // Convert level images to vocabulary format
+                    VOCABULARY = levelData.images.map(image => ({
+                        english: image.imageName,
+                        french: image.author
+                    }));
+                    
+                    console.log('Loaded level-specific vocabulary:', VOCABULARY.length, 'words from level', levelData.groupIndex + 1);
+                    
+                    // Reset game state but don't start automatically
+                    resetGameState();
+                    
+                    // Update UI buttons - show start button, hide restart button
+                    const startBtn = document.getElementById('start-game-btn');
+                    const restartBtn = document.getElementById('restart-game-btn');
+                    
+                    if (startBtn) {
+                        startBtn.disabled = false;
+                        startBtn.textContent = 'Start Game';
+                        startBtn.style.display = 'inline-flex';
+                    }
+                    
+                    if (restartBtn) {
+                        restartBtn.style.display = 'none';
+                    }
+                    
+                    // Show level information message
+                    showLevelMessage(`Level ${levelData.groupIndex + 1} loaded! ${VOCABULARY.length} words ready. Click "Start Game" to begin.`);
+                    
+                    return;
+                }
+            }
+            
+            // Fallback to loading all images if LevelManager not available
+            apiService.getGraphs(function(err, images) {
+                if (err) {
+                    console.error('Error loading vocabulary:', err);
+                    onError('Failed to load vocabulary from database');
+                    return;
+                }
+                
+                // Convert images to vocabulary format
+                VOCABULARY = images.map(image => ({
+                    english: image.imageName,
+                    french: image.author
+                }));
+                
+                console.log('Loaded vocabulary:', VOCABULARY.length, 'words from database');
+                
+                // Reset game state but don't start automatically
+                resetGameState();
+                
+                // Update UI buttons - show start button, hide restart button
+                const startBtn = document.getElementById('start-game-btn');
+                const restartBtn = document.getElementById('restart-game-btn');
+                
+                if (startBtn) {
+                    startBtn.disabled = false;
+                    startBtn.textContent = 'Start Game';
+                    startBtn.style.display = 'inline-flex';
+                }
+                
+                if (restartBtn) {
+                    restartBtn.style.display = 'none';
+                }
+                
+                // Show general message for fallback
+                showLevelMessage(`All vocabulary loaded! ${VOCABULARY.length} words ready. Click "Start Game" to begin.`);
+            });
+        }
+
+        // Function to show a temporary level message
+        function showLevelMessage(message) {
+            // Remove any existing level message
+            const existingMessage = document.getElementById('level-message');
+            if (existingMessage) {
+                existingMessage.remove();
+            }
+            
+            // Create new message element
+            const messageElement = document.createElement('div');
+            messageElement.id = 'level-message';
+            messageElement.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: #27ae60;
+                color: white;
+                padding: 15px 25px;
+                border-radius: 8px;
+                font-size: 16px;
+                font-weight: 500;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+                z-index: 1000;
+                animation: slideInDown 0.3s ease-out;
+            `;
+            messageElement.textContent = message;
+            
+            // Add CSS animation
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideInDown {
+                    from {
+                        opacity: 0;
+                        transform: translateX(-50%) translateY(-20px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateX(-50%) translateY(0);
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            // Add to document
+            document.body.appendChild(messageElement);
+            
+            // Auto-remove after 4 seconds
+            setTimeout(() => {
+                if (messageElement && messageElement.parentNode) {
+                    messageElement.style.animation = 'slideInDown 0.3s ease-out reverse';
+                    setTimeout(() => {
+                        messageElement.remove();
+                    }, 300);
+                }
+            }, 4000);
         }
 
         // Initialize vocabulary loading
@@ -173,6 +367,12 @@ let dropGame = (function() {
                 return;
             }
 
+            // Clear any level message when starting the game
+            const levelMessage = document.getElementById('level-message');
+            if (levelMessage) {
+                levelMessage.remove();
+            }
+
             // Initialize game session on first start
             if (gameState.allGameWords.length === 0) {
                 gameState.allGameWords = shuffleArray(VOCABULARY);
@@ -210,6 +410,11 @@ let dropGame = (function() {
             gameState.gameStartTime = null;
             gameState.gameCompleted = false;
             gameState.currentLogId = null; // Reset log ID for new game session
+            gameState.questionResults = []; // Reset individual question tracking
+            
+            // Clear drop game specific data
+            localStorage.removeItem('drop_game_data');
+            
             startGame();
         }
 
@@ -295,6 +500,15 @@ let dropGame = (function() {
                         wordObj.element.remove();
                         gameState.fallingWords.splice(i, 1);
                         gameState.incorrectAnswers++;
+                        
+                        // Track individual question result
+                        gameState.questionResults.push({
+                            englishWord: wordObj.english,
+                            correctAnswer: wordObj.french,
+                            isCorrect: false,
+                            timestamp: new Date().toISOString()
+                        });
+                        
                         updateScoreDisplay();
                         showIndicator('incorrect');
                         
@@ -364,6 +578,15 @@ let dropGame = (function() {
 
                     // Update score
                     gameState.correctAnswers++;
+                    
+                    // Track individual question result
+                    gameState.questionResults.push({
+                        englishWord: wordObj.english,
+                        correctAnswer: wordObj.french,
+                        isCorrect: true,
+                        timestamp: new Date().toISOString()
+                    });
+                    
                     updateScoreDisplay();
                     showIndicator('correct');
                     
@@ -832,24 +1055,34 @@ let dropGame = (function() {
             // Calculate total words attempted across all batches
             const totalWordsAttempted = Math.min(gameState.allGameWords.length, (gameState.currentBatch + 1) * gameState.wordsPerBatch);
             
-            // Prepare game data for all words attempted in the session
+            // Prepare game data using actual question results
             const gameData = {
-                questions: gameState.allGameWords.slice(0, totalWordsAttempted).map((word, index) => ({
+                questions: gameState.questionResults.map((result, index) => ({
                     questionId: index + 1,
-                    englishWord: word.english,
-                    correctAnswer: word.french,
-                    isCorrect: false, // We'll update this based on actual game results
-                    timestamp: new Date().toISOString()
+                    englishWord: result.englishWord,
+                    correctAnswer: result.correctAnswer,
+                    isCorrect: result.isCorrect,
+                    timestamp: result.timestamp
                 })),
                 gameType: 'drop'
             };
 
+            // Get current level information
+            let level = 0; // Default level if no level manager or level data
+            if (typeof LevelManager !== 'undefined') {
+                const levelData = LevelManager.getLevelData();
+                if (levelData && levelData.groupIndex !== undefined) {
+                    level = levelData.groupIndex;
+                }
+            }
+
             const logData = {
-                totalQuestions: totalWordsAttempted,
+                totalQuestions: gameState.questionResults.length,
                 correctAnswers: gameState.correctAnswers,
                 incorrectAnswers: gameState.incorrectAnswers,
                 score: score,
                 completionTime: completionTime,
+                level: level,
                 gameData: gameData,
                 gameType: 'drop'
             };
@@ -1442,6 +1675,45 @@ let dropGame = (function() {
                 }
             });
         }
+
+        // Initialize level system and load appropriate vocabulary
+        (function refresh() {
+            // Use LevelManager if available
+            if (typeof LevelManager !== 'undefined') {
+                // Initialize for drop game
+                if (!LevelManager.initializeLevel('drop')) {
+                    return; // Will redirect to level selection if needed
+                }
+                
+                console.log('Drop game initialized with level:', LevelManager.getCurrentLevelInfo());
+                
+                // Check if we need to start a new game after level selection
+                const levelData = LevelManager.getLevelData();
+                if (levelData && levelData.images) {
+                    // Check if this is a fresh level selection by looking at URL params
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const fromLevelSelect = urlParams.get('newLevel') === 'true';
+                    
+                    if (fromLevelSelect) {
+                        // Remove the parameter from URL for clean state
+                        const url = new URL(window.location);
+                        url.searchParams.delete('newLevel');
+                        window.history.replaceState({}, document.title, url.pathname + url.search);
+                        
+                        // Start a new game with the selected level
+                        console.log('New level selected, starting fresh game...');
+                        setTimeout(() => {
+                            newGame();
+                        }, 100); // Small delay to ensure UI is ready
+                        return; // Exit early to avoid double loading
+                    }
+                }
+            }
+            
+            // Load vocabulary (this will handle level-specific loading)
+            // This will be called after LevelManager setup only if not starting a new game
+            loadVocabulary();
+        }());
     });
 
     return {};

@@ -225,7 +225,7 @@ let groupSelect = (function () {
                 const gameUrls = {
                     'match': '/game.html',
                     'spell': '/spell.html',
-                    'drop': '/drop.html'
+                    'drop': '/drop.html?newLevel=true'
                 };
                 
                 window.location.href = gameUrls[gameType] || '/game.html';

@@ -99,6 +99,27 @@ let game = (function () {
             return arr;
         }
 
+        // Functions to manage selected answers
+        function getSelectedAnswers() {
+            const stored = localStorage.getItem('match_game_answers');
+            return stored ? JSON.parse(stored) : {};
+        }
+
+        function saveSelectedAnswer(questionId, selectedAnswer, isCorrect, correctAnswer) {
+            const answers = getSelectedAnswers();
+            answers[questionId] = {
+                selectedAnswer: selectedAnswer,
+                isCorrect: isCorrect,
+                correctAnswer: correctAnswer,
+                timestamp: new Date().toISOString()
+            };
+            localStorage.setItem('match_game_answers', JSON.stringify(answers));
+        }
+
+        function clearSelectedAnswers() {
+            localStorage.removeItem('match_game_answers');
+        }
+
         function setRandomListCookie(cookieName, list, daysToExpire = 7) {
             const expiration = new Date();
             expiration.setDate(expiration.getDate() + daysToExpire);
@@ -172,29 +193,84 @@ let game = (function () {
                 const nextBtn = elmt.querySelector('.next-question');
                 const prevBtn = elmt.querySelector('.prev-question');
 
-                elmt.querySelectorAll('.quiz-option').forEach(btn => {
-                    btn.addEventListener('click', function () {
-                        const isCorrect = this.dataset.correct === 'true';
-                        const selectedAnswer = this.textContent.trim();
-                        
-                        // Track the answer
-                        if (isCorrect) {
+                // Check if this question was already answered
+                const selectedAnswers = getSelectedAnswers();
+                const previousAnswer = selectedAnswers[id];
+                let questionAlreadyAnswered = false;
+
+                if (previousAnswer) {
+                    // Question was already answered, restore the state
+                    questionAlreadyAnswered = true;
+                    feedback.textContent = previousAnswer.isCorrect ? 'Correct! 🎉' : `Incorrect 😢 Answer: ${previousAnswer.correctAnswer}/${img.imageName}`;
+                    feedback.style.color = previousAnswer.isCorrect ? 'green' : 'red';
+                    
+                    // Find and highlight the selected button
+                    elmt.querySelectorAll('.quiz-option').forEach(btn => {
+                        btn.disabled = true; // Disable all buttons
+                        if (btn.textContent.trim() === previousAnswer.selectedAnswer) {
+                            btn.style.backgroundColor = previousAnswer.isCorrect ? '#dfffdf' : '#ffe0e0';
+                        }
+                    });
+                    
+                    // Update game session counters if this answer hasn't been counted yet
+                    const alreadyInSession = gameSession.questionsData.some(q => q.questionId === id);
+                    if (!alreadyInSession) {
+                        if (previousAnswer.isCorrect) {
                             gameSession.correctAnswers++;
                         } else {
                             gameSession.incorrectAnswers++;
                         }
                         
-                        // Store question data
+                        // Add to session data
                         gameSession.questionsData.push({
                             questionId: id,
                             englishWord: img.imageName,
-                            correctAnswer: correctFrenchWord,
-                            selectedAnswer: selectedAnswer,
-                            isCorrect: isCorrect,
-                            timestamp: new Date()
+                            correctAnswer: previousAnswer.correctAnswer,
+                            selectedAnswer: previousAnswer.selectedAnswer,
+                            isCorrect: previousAnswer.isCorrect,
+                            timestamp: new Date(previousAnswer.timestamp)
                         });
                         
                         gameSession.totalQuestions = gameSession.correctAnswers + gameSession.incorrectAnswers;
+                    }
+                }
+
+                elmt.querySelectorAll('.quiz-option').forEach(btn => {
+                    btn.addEventListener('click', function () {
+                        // Prevent selection if already answered
+                        if (questionAlreadyAnswered) {
+                            return;
+                        }
+
+                        const isCorrect = this.dataset.correct === 'true';
+                        const selectedAnswer = this.textContent.trim();
+                        
+                        // Save the selected answer to localStorage
+                        saveSelectedAnswer(id, selectedAnswer, isCorrect, correctFrenchWord);
+                        
+                        // Check if this question was already counted in the current session
+                        const alreadyInSession = gameSession.questionsData.some(q => q.questionId === id);
+                        
+                        if (!alreadyInSession) {
+                            // Track the answer (only if not already counted)
+                            if (isCorrect) {
+                                gameSession.correctAnswers++;
+                            } else {
+                                gameSession.incorrectAnswers++;
+                            }
+                            
+                            // Store question data
+                            gameSession.questionsData.push({
+                                questionId: id,
+                                englishWord: img.imageName,
+                                correctAnswer: correctFrenchWord,
+                                selectedAnswer: selectedAnswer,
+                                isCorrect: isCorrect,
+                                timestamp: new Date()
+                            });
+                            
+                            gameSession.totalQuestions = gameSession.correctAnswers + gameSession.incorrectAnswers;
+                        }
                         
                         feedback.textContent = isCorrect ? 'Correct! 🎉' : `Incorrect 😢 Answer: ${correctFrenchWord}/${img.imageName}`;
                         feedback.style.color = isCorrect ? 'green' : 'red';
@@ -204,6 +280,9 @@ let game = (function () {
                         elmt.querySelectorAll('.quiz-option').forEach(b => {
                             b.disabled = true;
                         });
+                        
+                        // Mark as answered
+                        questionAlreadyAnswered = true;
                         
                         // Check if this was the last question in the set
                         const currentIndex = JSON.parse(localStorage.getItem('index')) || 0;
@@ -330,11 +409,21 @@ let game = (function () {
             const completionTime = gameSession.startTime ? 
                 Math.round((new Date().getTime() - gameSession.startTime.getTime()) / 1000) : null;
             
+            // Get current level information
+            let level = 0; // Default level if no level manager or level data
+            if (typeof LevelManager !== 'undefined') {
+                const levelData = LevelManager.getLevelData();
+                if (levelData && levelData.groupIndex !== undefined) {
+                    level = levelData.groupIndex;
+                }
+            }
+            
             const logData = {
                 totalQuestions: gameSession.questionsData.length,
                 correctAnswers: gameSession.questionsData.filter(q => q.isCorrect).length,
                 incorrectAnswers: gameSession.questionsData.filter(q => !q.isCorrect).length,
                 completionTime: completionTime,
+                level: level,
                 gameData: {
                     questions: gameSession.questionsData,
                     gameType: 'match'
@@ -371,6 +460,43 @@ let game = (function () {
             };
         }
 
+        function loadExistingAnswersToSession() {
+            const selectedAnswers = getSelectedAnswers();
+            const randomList = JSON.parse(localStorage.getItem('random_list')) || [];
+            
+            // Only load answers for questions in the current random list
+            Object.keys(selectedAnswers).forEach(questionId => {
+                if (randomList.includes(questionId)) {
+                    const answer = selectedAnswers[questionId];
+                    
+                    // Check if already in session to avoid duplicates
+                    const alreadyInSession = gameSession.questionsData.some(q => q.questionId === questionId);
+                    if (!alreadyInSession) {
+                        if (answer.isCorrect) {
+                            gameSession.correctAnswers++;
+                        } else {
+                            gameSession.incorrectAnswers++;
+                        }
+                        
+                        gameSession.questionsData.push({
+                            questionId: questionId,
+                            englishWord: 'loaded', // Will be updated when question is displayed
+                            correctAnswer: answer.correctAnswer,
+                            selectedAnswer: answer.selectedAnswer,
+                            isCorrect: answer.isCorrect,
+                            timestamp: new Date(answer.timestamp)
+                        });
+                    }
+                }
+            });
+            
+            gameSession.totalQuestions = gameSession.correctAnswers + gameSession.incorrectAnswers;
+            
+            if (gameSession.totalQuestions > 0) {
+                console.log(`Loaded ${gameSession.totalQuestions} existing answers from localStorage`);
+            }
+        }
+
         async function newGame() {
             try {
                 // Log previous session if it exists
@@ -380,6 +506,9 @@ let game = (function () {
                 
                 // Initialize new session
                 initializeGameSession();
+                
+                // Clear previously selected answers
+                clearSelectedAnswers();
                 
                 // Use LevelManager if available
                 if (typeof LevelManager !== 'undefined') {
@@ -424,6 +553,9 @@ let game = (function () {
         const levelSelectBtn = document.getElementById('level-select-btn');
         if (levelSelectBtn) {
             levelSelectBtn.addEventListener('click', function() {
+                if (gameSession.totalQuestions > 0) {
+                    logGameSession();
+                }
                 window.location.href = '/group-select.html?game=match';
             });
         }
@@ -496,6 +628,9 @@ let game = (function () {
                 }
                 console.log(JSON.parse(localStorage.getItem('random_list')));
             }
+
+            // Load existing answers into the current session
+            loadExistingAnswersToSession();
 
             updateGraph();
         }());

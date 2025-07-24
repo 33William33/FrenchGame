@@ -54,7 +54,7 @@ const LevelManager = (function () {
             });
             
             // Also clear other game-related keys
-            const gameKeys = ['index', 'index1', 'random_list', 'random_list1'];
+            const gameKeys = ['index', 'index1', 'random_list', 'random_list1', 'match_game_answers', 'spell_game_answers', 'drop_game_data'];
             gameKeys.forEach(key => {
                 localStorage.removeItem(key);
             });
@@ -71,7 +71,7 @@ const LevelManager = (function () {
     function resetGameState() {
         try {
             // Clear game state keys but keep level data
-            const gameStateKeys = ['index', 'index1', 'random_list', 'random_list1'];
+            const gameStateKeys = ['index', 'index1', 'random_list', 'random_list1', 'match_game_answers', 'spell_game_answers', 'drop_game_data'];
             gameStateKeys.forEach(key => {
                 localStorage.removeItem(key);
             });
@@ -112,12 +112,23 @@ const LevelManager = (function () {
             return false;
         }
 
-        // Reset game indices
-        const indexKey = gameType === 'spell' ? 'index1' : 'index';
-        localStorage.setItem(indexKey, JSON.stringify(0));
+        // Reset game indices for match/spell games (drop game doesn't use these)
+        if (gameType !== 'drop') {
+            const indexKey = gameType === 'spell' ? 'index1' : 'index';
+            localStorage.setItem(indexKey, JSON.stringify(0));
+            
+            // Generate fresh random list for match/spell games
+            generateRandomListForLevel(gameType);
+        }
         
-        // Generate fresh random list for the level
-        generateRandomListForLevel(gameType);
+        // Clear game-specific data
+        if (gameType === 'drop') {
+            localStorage.removeItem('drop_game_data');
+        } else if (gameType === 'spell') {
+            localStorage.removeItem('spell_game_answers');
+        } else {
+            localStorage.removeItem('match_game_answers');
+        }
         
         console.log(`New ${gameType} game started for level ${levelData.groupIndex + 1}`);
         return true;

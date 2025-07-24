@@ -680,7 +680,7 @@ app.post("/api/match-game/log", verifyToken, function (req, res, next) {
         return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const { totalQuestions, correctAnswers, incorrectAnswers, completionTime, gameData } = req.body;
+    const { totalQuestions, correctAnswers, incorrectAnswers, completionTime, gameData, level } = req.body;
 
     matchGameLogs.count({}, function (err, count) {
         if (err) return res.status(500).json({ error: err.message });
@@ -694,6 +694,7 @@ app.post("/api/match-game/log", verifyToken, function (req, res, next) {
             incorrectAnswers: incorrectAnswers || 0,
             score: correctAnswers && totalQuestions ? Math.round((correctAnswers / totalQuestions) * 100) : 0,
             completionTime: completionTime || null, // in seconds
+            level: level !== undefined ? level : 0, // level information (0-based)
             gameData: gameData || null, // detailed game session data
             gameType: 'match',
             date: new Date()
@@ -712,7 +713,7 @@ app.post("/api/spelling-game/log", verifyToken, function (req, res, next) {
         return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const { totalQuestions, correctAnswers, incorrectAnswers, completionTime, gameData } = req.body;
+    const { totalQuestions, correctAnswers, incorrectAnswers, completionTime, gameData, level } = req.body;
 
     spellingGameLogs.count({}, function (err, count) {
         if (err) return res.status(500).json({ error: err.message });
@@ -726,6 +727,7 @@ app.post("/api/spelling-game/log", verifyToken, function (req, res, next) {
             incorrectAnswers: incorrectAnswers || 0,
             score: correctAnswers && totalQuestions ? Math.round((correctAnswers / totalQuestions) * 100) : 0,
             completionTime: completionTime || null, // in seconds
+            level: level !== undefined ? level : 0, // level information (0-based)
             gameData: gameData || null, // detailed game session data
             gameType: 'spelling',
             date: new Date()
@@ -744,7 +746,7 @@ app.post("/api/drop-game/log", verifyToken, function (req, res, next) {
         return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const { totalQuestions, correctAnswers, incorrectAnswers, completionTime, gameData } = req.body;
+    const { totalQuestions, correctAnswers, incorrectAnswers, completionTime, gameData, level } = req.body;
 
     // Find the highest existing ID and increment it
     dropGameLogs.find({}).sort({ _id: -1 }).limit(1).exec(function (err, docs) {
@@ -761,6 +763,7 @@ app.post("/api/drop-game/log", verifyToken, function (req, res, next) {
             incorrectAnswers: incorrectAnswers || 0,
             score: correctAnswers && totalQuestions ? Math.round((correctAnswers / totalQuestions) * 100) : 0,
             completionTime: completionTime || null, // in seconds
+            level: level !== undefined ? level : 0, // level information (0-based)
             gameData: gameData || null, // detailed game session data
             gameType: 'drop',
             date: new Date()
@@ -780,7 +783,7 @@ app.put("/api/drop-game/log/:logId", verifyToken, function (req, res, next) {
     }
 
     const logId = parseInt(req.params.logId);
-    const { totalQuestions, correctAnswers, incorrectAnswers, completionTime, gameData, score } = req.body;
+    const { totalQuestions, correctAnswers, incorrectAnswers, completionTime, gameData, score, level } = req.body;
 
     const updateData = {
         totalQuestions: totalQuestions || 0,
@@ -788,6 +791,7 @@ app.put("/api/drop-game/log/:logId", verifyToken, function (req, res, next) {
         incorrectAnswers: incorrectAnswers || 0,
         score: score || 0,
         completionTime: completionTime || 0,
+        level: level !== undefined ? level : 0, // level information (0-based)
         gameData: gameData || null,
         updatedAt: new Date()
     };
@@ -896,6 +900,22 @@ app.get("/api/match-game/stats/:userId?", verifyToken, function (req, res, next)
     });
 });
 
+// Get Individual Match Game Details
+app.get("/api/match-game/details/:gameId", verifyToken, function (req, res, next) {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const gameId = parseInt(req.params.gameId);
+    
+    matchGameLogs.findOne({ _id: gameId, userId: req.user._id }, function (err, game) {
+        if (err) return res.status(500).json({ error: err.message });
+        if (!game) return res.status(404).json({ error: 'Game not found' });
+        
+        res.json(game);
+    });
+});
+
 // Get Spelling Game Stats
 app.get("/api/spelling-game/stats/:userId?", verifyToken, function (req, res, next) {
     if (!req.user) {
@@ -925,6 +945,22 @@ app.get("/api/spelling-game/stats/:userId?", verifyToken, function (req, res, ne
     });
 });
 
+// Get Individual Spelling Game Details
+app.get("/api/spelling-game/details/:gameId", verifyToken, function (req, res, next) {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const gameId = parseInt(req.params.gameId);
+    
+    spellingGameLogs.findOne({ _id: gameId, userId: req.user._id }, function (err, game) {
+        if (err) return res.status(500).json({ error: err.message });
+        if (!game) return res.status(404).json({ error: 'Game not found' });
+        
+        res.json(game);
+    });
+});
+
 // Get Drop Game Stats
 app.get("/api/drop-game/stats/:userId?", verifyToken, function (req, res, next) {
     if (!req.user) {
@@ -951,6 +987,22 @@ app.get("/api/drop-game/stats/:userId?", verifyToken, function (req, res, next) 
         };
         
         res.json(stats);
+    });
+});
+
+// Get Individual Drop Game Details
+app.get("/api/drop-game/details/:gameId", verifyToken, function (req, res, next) {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const gameId = parseInt(req.params.gameId);
+    
+    dropGameLogs.findOne({ _id: gameId, userId: req.user._id }, function (err, game) {
+        if (err) return res.status(500).json({ error: err.message });
+        if (!game) return res.status(404).json({ error: 'Game not found' });
+        
+        res.json(game);
     });
 });
 

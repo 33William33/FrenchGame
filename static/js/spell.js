@@ -35,6 +35,27 @@ let spell = (function () {
             return arr;
         }
 
+        // Functions to manage selected answers for spelling game
+        function getSelectedAnswers() {
+            const stored = localStorage.getItem('spell_game_answers');
+            return stored ? JSON.parse(stored) : {};
+        }
+
+        function saveSelectedAnswer(questionId, userAnswer, isCorrect, correctAnswer) {
+            const answers = getSelectedAnswers();
+            answers[questionId] = {
+                userAnswer: userAnswer,
+                isCorrect: isCorrect,
+                correctAnswer: correctAnswer,
+                timestamp: new Date().toISOString()
+            };
+            localStorage.setItem('spell_game_answers', JSON.stringify(answers));
+        }
+
+        function clearSelectedAnswers() {
+            localStorage.removeItem('spell_game_answers');
+        }
+
         function setRandomListCookie(cookieName, list, daysToExpire = 7) {
             const expiration = new Date();
             expiration.setDate(expiration.getDate() + daysToExpire);
@@ -114,53 +135,111 @@ let spell = (function () {
                     nextBtn.disabled = true;
                 }
 
+                // Check if this question was already answered
+                const selectedAnswers = getSelectedAnswers();
+                const previousAnswer = selectedAnswers[id];
+                let questionAlreadyAnswered = false;
+
+                if (previousAnswer) {
+                    // Question was already answered, restore the state but keep input enabled
+                    questionAlreadyAnswered = true;
+                    input.value = previousAnswer.userAnswer;
+                    // Don't disable input - allow user to continue typing
+                    // input.disabled = true;
+                    // form.querySelector('button[type="submit"]').disabled = true;
+                    
+                    feedback.textContent = previousAnswer.isCorrect 
+                        ? "Correct! 🎉 (Already recorded)" 
+                        : `Incorrect😢. Answer: ${previousAnswer.correctAnswer}/${img.imageName} (Already recorded)`;
+                    feedback.style.color = previousAnswer.isCorrect ? 'green' : 'red';
+                    
+                    // Update game session counters if this answer hasn't been counted yet
+                    const alreadyInSession = gameSession.questionsData.some(q => q.questionId === id);
+                    if (!alreadyInSession) {
+                        if (previousAnswer.isCorrect) {
+                            gameSession.correctAnswers++;
+                        } else {
+                            gameSession.incorrectAnswers++;
+                        }
+                        
+                        // Add to session data
+                        gameSession.questionsData.push({
+                            questionId: id,
+                            englishWord: img.imageName,
+                            correctAnswer: previousAnswer.correctAnswer,
+                            userAnswer: previousAnswer.userAnswer,
+                            isCorrect: previousAnswer.isCorrect,
+                            timestamp: new Date(previousAnswer.timestamp)
+                        });
+                        
+                        gameSession.totalQuestions = gameSession.correctAnswers + gameSession.incorrectAnswers;
+                    }
+                }
+
                 form.addEventListener('submit', (e) => {
                     e.preventDefault();
+                    
                     const userAnswer = input.value.toLowerCase().trim();
                     const isCorrect = userAnswer === correctFrenchWord;
 
-                    // Track the answer
+                    // Always provide feedback for current answer
                     if (isCorrect) {
-                        gameSession.correctAnswers++;
-                    } else {
-                        gameSession.incorrectAnswers++;
-                    }
-                    
-                    gameSession.totalQuestions = gameSession.correctAnswers + gameSession.incorrectAnswers;
-                    
-                    // Store question data
-                    gameSession.questionsData.push({
-                        questionId: id,
-                        englishWord: img.imageName,
-                        correctAnswer: correctFrenchWord,
-                        userAnswer: userAnswer,
-                        isCorrect: isCorrect,
-                        timestamp: new Date()
-                    });
-
-                    if (isCorrect) {
-                        feedback.textContent = "Correct! 🎉";
+                        feedback.textContent = questionAlreadyAnswered 
+                            ? "Correct! 🎉 (Already recorded)" 
+                            : "Correct! 🎉";
                         feedback.style.color = 'green';
                     } else {
-                        feedback.textContent = `Incorrect😢. Answer: ${correctFrenchWord}/${img.imageName}`;
+                        feedback.textContent = questionAlreadyAnswered 
+                            ? `Incorrect😢. Answer: ${correctFrenchWord}/${img.imageName} (Already recorded)`
+                            : `Incorrect😢. Answer: ${correctFrenchWord}/${img.imageName}`;
                         feedback.style.color = 'red';
                     }
 
-                    // Clear input after check
-                    input.value = '';
-                    
-                    // Check if this was the last question in the set
-                    const currentIndex = JSON.parse(localStorage.getItem('index1')) || 0;
-                    const randomList = JSON.parse(localStorage.getItem('random_list1')) || [];
-                    
-                    if (currentIndex + 1 >= randomList.length) {
-                        // This was the last question, show completion message after delay
-                        setTimeout(() => {
-                            if (gameSession.totalQuestions > 0) {
-                                logGameSession();
-                                alert(`Spelling Game Completed!\n\nFinal Score: ${gameSession.correctAnswers}/${gameSession.totalQuestions} (${Math.round((gameSession.correctAnswers/gameSession.totalQuestions)*100)}%)\n\nClick "New Game" to play again!`);
+                    // Only save and log if this is the first submission for this question
+                    if (!questionAlreadyAnswered) {
+                        // Save the selected answer to localStorage
+                        saveSelectedAnswer(id, userAnswer, isCorrect, correctFrenchWord);
+                        
+                        // Check if this question was already counted in the current session
+                        const alreadyInSession = gameSession.questionsData.some(q => q.questionId === id);
+                        
+                        if (!alreadyInSession) {
+                            // Track the answer (only if not already counted)
+                            if (isCorrect) {
+                                gameSession.correctAnswers++;
+                            } else {
+                                gameSession.incorrectAnswers++;
                             }
-                        }, 2000); // 2 second delay to show feedback
+                            
+                            gameSession.totalQuestions = gameSession.correctAnswers + gameSession.incorrectAnswers;
+                            
+                            // Store question data
+                            gameSession.questionsData.push({
+                                questionId: id,
+                                englishWord: img.imageName,
+                                correctAnswer: correctFrenchWord,
+                                userAnswer: userAnswer,
+                                isCorrect: isCorrect,
+                                timestamp: new Date()
+                            });
+                        }
+                        
+                        // Mark as answered after first submission
+                        questionAlreadyAnswered = true;
+                        
+                        // Check if this was the last question in the set
+                        const currentIndex = JSON.parse(localStorage.getItem('index1')) || 0;
+                        const randomList = JSON.parse(localStorage.getItem('random_list1')) || [];
+                        
+                        if (currentIndex + 1 >= randomList.length) {
+                            // This was the last question, show completion message after delay
+                            setTimeout(() => {
+                                if (gameSession.totalQuestions > 0) {
+                                    logGameSession();
+                                    alert(`Spelling Game Completed!\n\nFinal Score: ${gameSession.correctAnswers}/${gameSession.totalQuestions} (${Math.round((gameSession.correctAnswers/gameSession.totalQuestions)*100)}%)\n\nClick "New Game" to play again!`);
+                                }
+                            }, 2000); // 2 second delay to show feedback
+                        }
                     }
                 });
 
@@ -269,11 +348,21 @@ let spell = (function () {
             const completionTime = gameSession.startTime ? 
                 Math.round((new Date().getTime() - gameSession.startTime.getTime()) / 1000) : null;
             
+            // Get current level information
+            let level = 0; // Default level if no level manager or level data
+            if (typeof LevelManager !== 'undefined') {
+                const levelData = LevelManager.getLevelData();
+                if (levelData && levelData.groupIndex !== undefined) {
+                    level = levelData.groupIndex;
+                }
+            }
+            
             const logData = {
                 totalQuestions: gameSession.totalQuestions,
                 correctAnswers: gameSession.correctAnswers,
                 incorrectAnswers: gameSession.incorrectAnswers,
                 completionTime: completionTime,
+                level: level,
                 gameData: {
                     questions: gameSession.questionsData,
                     gameType: 'spelling'
@@ -310,6 +399,43 @@ let spell = (function () {
             };
         }
 
+        function loadExistingAnswersToSession() {
+            const selectedAnswers = getSelectedAnswers();
+            const randomList = JSON.parse(localStorage.getItem('random_list1')) || [];
+            
+            // Only load answers for questions in the current random list
+            Object.keys(selectedAnswers).forEach(questionId => {
+                if (randomList.includes(questionId)) {
+                    const answer = selectedAnswers[questionId];
+                    
+                    // Check if already in session to avoid duplicates
+                    const alreadyInSession = gameSession.questionsData.some(q => q.questionId === questionId);
+                    if (!alreadyInSession) {
+                        if (answer.isCorrect) {
+                            gameSession.correctAnswers++;
+                        } else {
+                            gameSession.incorrectAnswers++;
+                        }
+                        
+                        gameSession.questionsData.push({
+                            questionId: questionId,
+                            englishWord: 'loaded', // Will be updated when question is displayed
+                            correctAnswer: answer.correctAnswer,
+                            userAnswer: answer.userAnswer,
+                            isCorrect: answer.isCorrect,
+                            timestamp: new Date(answer.timestamp)
+                        });
+                    }
+                }
+            });
+            
+            gameSession.totalQuestions = gameSession.correctAnswers + gameSession.incorrectAnswers;
+            
+            if (gameSession.totalQuestions > 0) {
+                console.log(`Loaded ${gameSession.totalQuestions} existing spelling answers from localStorage`);
+            }
+        }
+
         async function newGame() {
             try {
                 // Log previous session if it exists
@@ -319,6 +445,9 @@ let spell = (function () {
                 
                 // Initialize new session
                 initializeGameSession();
+                
+                // Clear previously selected answers
+                clearSelectedAnswers();
                 
                 // Use LevelManager if available
                 if (typeof LevelManager !== 'undefined') {
@@ -365,6 +494,9 @@ let spell = (function () {
         const levelSelectBtn = document.getElementById('level-select-btn');
         if (levelSelectBtn) {
             levelSelectBtn.addEventListener('click', function() {
+                if (gameSession.totalQuestions > 0) {
+                    logGameSession();
+                }
                 window.location.href = '/group-select.html?game=spell';
             });
         }
@@ -427,6 +559,9 @@ let spell = (function () {
                 }
                 console.log(JSON.parse(localStorage.getItem('random_list1')));
             }
+
+            // Load existing answers into the current session
+            loadExistingAnswersToSession();
 
             updateGraph();
         }());
