@@ -14,32 +14,32 @@ let game = (function () {
     window.addEventListener("load", function () {
         const FRENCH_WORDS = [
             // Original Base Words (20)
-            'logement', 'loyer', 'épicerie', 'hygiène', 'nettoyage',
-            'aspirateur', 'cuisinière', 'frigidaire', 'douche', 'laverie',
-            'stationnement', 'transports en commun', 'taxi', 'facture', 'déchets',
+            'le logement', 'le loyer', "l'épicerie", "l'hygiène", 'le nettoyage',
+            "l'aspirateur", 'la cuisinière', 'le frigidaire', 'la douche', 'la laverie',
+            'le stationnement', 'les transports en commun', 'le taxi', 'la facture', 'les déchets',
 
             // **Employment & Work**
-            'emploi', 'collègue', 'salaire',
-            'horaire', 'congé', 'formation', 'licenciement', 'démission',
-            'bureau', 'réunion', 'contrat', 'syndicat', 'retraite',
+            "l'emploi", 'le collègue', 'le salaire',
+            "l'horaire", 'le congé', 'la formation', 'le licenciement', 'la démission',
+            'le bureau', 'la réunion', 'le contrat', 'le syndicat', 'la retraite',
 
             // **Government & Immigration**
-            'permis de résidence', 'citoyenneté', 'passeport', 'visa', 'douane',
-            'ambassade',
-            'impôts',
+            'le permis de résidence', 'la citoyenneté', 'le passeport', 'le visa', 'la douane',
+            "l'ambassade",
+            'les impôts',
 
             // **Healthcare**
-            'hôpital', 'médecin', 'ordonnance', 'pharmacie',
-            'urgence', 'vaccination', 'symptômes', 'dentiste', 'infirmière',
+            "l'hôpital", 'le médecin', "l'ordonnance", 'la pharmacie',
+            "l'urgence", 'la vaccination', 'les symptômes', 'le dentiste', "l'infirmière",
 
             // **Education**
-            'diplôme', 'université', 'inscription', 'scolarité',
-            'élève', 'professeur', 'devoir', 'examen', 'bibliothèque',
+            'le diplôme', "l'université", "l'inscription", 'la scolarité',
+            "l'élève", 'le professeur', 'le devoir', "l'examen", 'la bibliothèque',
 
             // **Canadian Culture & Society**
-            'diversité', 'bilingue', 'hiver', 'neige', 'patinage',
-            'hockey', 'érablière', 'poutine',
-            'parc national', 'réconciliation', 'autochtone',
+            'la diversité', 'bilingue', "l'hiver", 'la neige', 'le patinage',
+            'le hockey', "l'érablière", 'la poutine',
+            'la réconciliation', "l'autochtone",
 
             // **Practical Verbs**
             'remplir', 'signer', 'demander', 'répondre', 'comprendre',
@@ -50,33 +50,33 @@ let game = (function () {
             'sécuritaire', 'culturel', 'officiel', 'gratuit', 'payant',
 
             // **Technology & Communication**
-            'courriel', 'téléchargement',
-            'application', 'imprimante', 'scanner',
+            'le courriel', 'le téléchargement',
+            "l'application", "l'imprimante", 'le scanner',
 
             // **Shopping & Services**
-            'panier', 'caisse', 'rabais', 'remboursement',
-            'livraison', 'étiquette', 'facture', 'prospérité', 'authenticité', 'vertu', 'culpabilité', 'solitude',
-            'revendication', 'foi', 'vérité', 'peur', 'paix', 'doute', 'sentiment',
-            'confiance', 'connaissance', 'lumière', 'volonté',
+            'le panier', 'la caisse', 'le rabais', 'le remboursement',
+            'la livraison', "l'étiquette", 'la facture', 'la prospérité', "l'authenticité", 'la vertu', 'la culpabilité', 'la solitude',
+            'la revendication', 'la foi', 'la vérité', 'la peur', 'la paix', 'le doute', 'le sentiment',
+            'la confiance', 'la connaissance', 'la lumière', 'la volonté',
 
             // Actions & Processes
-            'traite', 'condamnation', 'découverte', 'lutte', 'mise', 'formation',
-            'enseignement', 'gestion', 'recrutement', 'remise', 'traitement', 'enquête',
-            'contrôle', 'comportement', 'rayonnement',
+            'la traite', 'la condamnation', 'la découverte', 'la lutte', 'la mise', 'la formation',
+            "l'enseignement", 'la gestion', 'le recrutement', 'la remise', 'le traitement', "l'enquête",
+            'le contrôle', 'le comportement', 'le rayonnement',
 
             // Objects & Concepts
-            'toile', 'chronique', 'apparition', 'patrie', 'cible', 'sauvegarde',
-            'configuration', 'racine', 'pierre', 'plume', 'œuvre', 'presse', 'preuve',
-            'guerre', 'forme', 'loi', 'matière', 'affaire', 'vis', 'croissance', 'tête',
-            'règle', 'santé', 'note', 'moyenne', 'moitié', 'montre', 'figure', 'valeur',
-            'façon', 'époque', 'somme', 'faveur', 'rendement', 'trimestre', 'détour',
-            'prétention', 'recueil', 'rédaction', 'or', 'poids', 'plan', 'plaisir', 'peuple',
-            'intérêt', 'cadre', 'récit', 'cœur', 'roi', 'courant', 'compte', 'service',
-            'sein', 'mouvement', 'niveau', 'réseau', 'risque', 'bois', 'sort', 'succès',
-            'siècle', 'conseil', 'marque', 'chapitre', 'titre', 'voix', 'démarche',
-            'propriété', 'conception', 'contenu', 'objectif', 'manque',
-            'vers', 'traité', 'bas', 'taux', 'avis', 'intérieur', 'cas', 'personnage', 'juge',
-            'sens', 'discours', 'four', 'ouvrage', 'fait', 'vol', 'état'
+            'la toile', 'la chronique', "l'apparition", 'la patrie', 'la cible', 'la sauvegarde',
+            'la configuration', 'la racine', 'la pierre', 'la plume', "l'œuvre", 'la presse', 'la preuve',
+            'la guerre', 'la forme', 'la loi', 'la matière', "l'affaire", 'la vis', 'la croissance', 'la tête',
+            'la règle', 'la santé', 'la note', 'la moyenne', 'la moitié', 'la montre', 'la figure', 'la valeur',
+            'la façon', "l'époque", 'la somme', 'la faveur', 'le rendement', 'le trimestre', 'le détour',
+            'la prétention', 'le recueil', 'la rédaction', "l'or", 'le poids', 'le plan', 'le plaisir', 'le peuple',
+            "l'intérêt", 'le cadre', 'le récit', 'le cœur', 'le roi', 'le courant', 'le compte', 'le service',
+            'le sein', 'le mouvement', 'le niveau', 'le réseau', 'le risque', 'le bois', 'le sort', 'le succès',
+            'le siècle', 'le conseil', 'la marque', 'le chapitre', 'le titre', 'la voix', 'la démarche',
+            'la propriété', 'la conception', 'le contenu', "l'objectif", 'le manque',
+            'vers', 'le traité', 'le bas', 'le taux', "l'avis", "l'intérieur", 'le cas', 'le personnage', 'le juge',
+            'le sens', 'le discours', 'le four', "l'ouvrage", 'le fait', 'le vol', "l'état"
         ];
 
         function onError(err) {
@@ -331,9 +331,9 @@ let game = (function () {
                 Math.round((new Date().getTime() - gameSession.startTime.getTime()) / 1000) : null;
             
             const logData = {
-                totalQuestions: gameSession.totalQuestions,
-                correctAnswers: gameSession.correctAnswers,
-                incorrectAnswers: gameSession.incorrectAnswers,
+                totalQuestions: gameSession.questionsData.length,
+                correctAnswers: gameSession.questionsData.filter(q => q.isCorrect).length,
+                incorrectAnswers: gameSession.questionsData.filter(q => !q.isCorrect).length,
                 completionTime: completionTime,
                 gameData: {
                     questions: gameSession.questionsData,
@@ -351,7 +351,7 @@ let game = (function () {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    console.log('Game session logged successfully. Score:', data.score + '%');
+                    console.log('Game session logged successfully. Questions recorded:', gameSession.questionsData.length, 'Score:', data.score + '%');
                 } else {
                     console.error('Error logging game session:', data.error);
                 }
@@ -381,11 +381,28 @@ let game = (function () {
                 // Initialize new session
                 initializeGameSession();
                 
-                localStorage.setItem('index', JSON.stringify(0));
-                apiService.getGraphs(function (err, imgts) {
-                    if (err) return onError(err);
-                    localStorage.setItem('random_list', JSON.stringify(generateRandomList(imgts.length)));
-                });
+                // Use LevelManager if available
+                if (typeof LevelManager !== 'undefined') {
+                    // Initialize for match game
+                    if (!LevelManager.initializeLevel('match')) {
+                        return; // Will redirect to level selection if needed
+                    }
+                    
+                    // Reset index and generate new random list for current level
+                    localStorage.setItem('index', JSON.stringify(0));
+                    LevelManager.generateRandomListForLevel('match');
+                } else {
+                    // Fallback to old method
+                    localStorage.setItem('index', JSON.stringify(0));
+                    apiService.getGraphs(function (err, imgts) {
+                        if (err) return onError(err);
+                        // Use generateRandomList to create random order of questions
+                        const randomIndices = generateRandomList(imgts.length);
+                        const randomizedIds = randomIndices.map(index => imgts[index - 1]._id);
+                        localStorage.setItem('random_list', JSON.stringify(randomizedIds));
+                    });
+                }
+                
                 updateGraph();
             } catch (error) {
                 return onError(error);
@@ -401,6 +418,14 @@ let game = (function () {
             } catch (error) {
                 return onError(error);
             }
+        }
+        
+        // Add event listener for level select button
+        const levelSelectBtn = document.getElementById('level-select-btn');
+        if (levelSelectBtn) {
+            levelSelectBtn.addEventListener('click', function() {
+                window.location.href = '/group-select.html?game=match';
+            });
         }
 
 
@@ -439,21 +464,40 @@ let game = (function () {
                 initializeGameSession();
             }
 
-            let storedList = JSON.parse(localStorage.getItem('random_list')) || null;
-            let idx = JSON.parse(localStorage.getItem('index')) || null;
-            if (idx === null) {
-                localStorage.setItem('index', JSON.stringify(0));
-            }
-            if (storedList === null) {
-                apiService.getGraphs(function (err, imgts) {
-                    if (err) return onError(err);
-                    localStorage.setItem('random_list', JSON.stringify(generateRandomList(imgts.length)));
-                });
+            // Use LevelManager if available
+            if (typeof LevelManager !== 'undefined') {
+                // Initialize for match game
+                if (!LevelManager.initializeLevel('match')) {
+                    return; // Will redirect to level selection if needed
+                }
+                
+                // Check if we need to initialize index (fresh start)
+                let currentIndex = localStorage.getItem('index');
+                if (currentIndex === null) {
+                    localStorage.setItem('index', JSON.stringify(0));
+                }
+                
+                console.log('Match game initialized with level:', LevelManager.getCurrentLevelInfo());
+            } else {
+                // Fallback to old method
+                let storedList = JSON.parse(localStorage.getItem('random_list')) || null;
+                let idx = JSON.parse(localStorage.getItem('index')) || null;
+                if (idx === null) {
+                    localStorage.setItem('index', JSON.stringify(0));
+                }
+                if (storedList === null) {
+                    apiService.getGraphs(function (err, imgts) {
+                        if (err) return onError(err);
+                        // Use generateRandomList to create random order of questions
+                        const randomIndices = generateRandomList(imgts.length);
+                        const randomizedIds = randomIndices.map(index => imgts[index - 1]._id);
+                        localStorage.setItem('random_list', JSON.stringify(randomizedIds));
+                    });
+                }
+                console.log(JSON.parse(localStorage.getItem('random_list')));
             }
 
             updateGraph();
-            console.log(JSON.parse(localStorage.getItem('random_list')));
-            //setTimeout(refresh, 5000);
         }());
 
     });

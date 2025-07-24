@@ -124,7 +124,7 @@ let index = (function () {
             let elmt = document.createElement("div");
             elmt.className = "img-format";
             elmt.innerHTML = `<div class="img-element">
-                              <div class="img-title">English: ${title}</div>
+                              <div class="img-title">🍔English: ${title}</div>
                               <div class= "control">
                               <div class="left-icon icon"></div>
                               <div id="imageId" class="hide">${id}</div>
@@ -132,7 +132,7 @@ let index = (function () {
                               <div class="right-icon icon"></div>
                               </div>
                               <div class="below">
-                              <div class="img-username">French: ${author}</div>
+                              <div class="img-username">🏆French: ${author}</div>
                               <div class="delete-icon icon"></div>
                               </div>
                               </div>`;
@@ -235,13 +235,14 @@ let index = (function () {
             apiService.getGraphs(function (err, imgts) {
                 if (err) return onError(err);
                 if (imgts.length > 0) {
+                    imgts = imgts.reverse(); // Reverse the array to show newest first
                     var params = (new URL(document.location)).searchParams;
                     var imgid = params.get("img");
                     if (imgid !== undefined && imgid !== null) {
                         displayImage(imgid)
-                    } else
+                    } else {
                         createImage(imgts[0].imageName, imgts[0]._id, imgts[0].author, imgts[0].url);
-
+                    }
                 } else {
                     document.getElementById("display").innerHTML = ""
                 }
@@ -262,7 +263,7 @@ let index = (function () {
 
         async function initializeGame() {
             try {
-                window.location.href = '/game.html';
+                window.location.href = '/group-select.html?game=match';
             } catch (error) {
                 return onError(error);
             }
@@ -270,7 +271,7 @@ let index = (function () {
 
         async function initializeSpell() {
             try {
-                window.location.href = '/spell.html';
+                window.location.href = '/group-select.html?game=spell';
             } catch (error) {
                 return onError(error);
             }
@@ -278,52 +279,12 @@ let index = (function () {
 
         async function initializeDropGame() {
             try {
-                window.location.href = '/drop.html';
+                window.location.href = '/group-select.html?game=drop';
             } catch (error) {
                 return onError(error);
             }
         }
 
-        // Add click handler properly
-
-        // function updateComments(imgid, page) {
-        //     document.getElementById("comments").innerHTML = ""
-        //     apiService.getComments(imgid, page, function(err, comments) {
-        //         if (err) return onError(err);
-        //         if (comments.length > 0) {
-        //             comments = comments.reverse()
-        //             comments.forEach(function(comment) {
-        //                 let elmt = createComment(imgid, comment._id, comment.author, comment.comment, comment.date);
-        //                 document.getElementById("comments").prepend(elmt);
-        //             });
-        //             let control = document.createElement("div");
-        //             control.className = "cmt-control";
-        //             control.innerHTML = `<div id="leftcmt" class="left-cmt icon"></div>
-        //                         <div id="rightcmt" class="right-cmt icon"></div>`;
-        //             document.getElementById("comments").prepend(control);
-        //             let elmte = document.getElementById("comments")
-        //             elmte
-        //                 .querySelector("#leftcmt")
-        //                 .addEventListener("click", function(e) {
-        //                     let curPage = page
-        //                     if (curPage == 0)
-        //                         curPage = 1
-        //                     updateComments(imgid, curPage - 1)
-        //                 });
-        //             elmte
-        //                 .querySelector("#rightcmt")
-        //                 .addEventListener("click", function(e) {
-        //                     let curPage = page
-        //                     updateComments(imgid, curPage + 1)
-        //                 });
-        //         }
-        //         if (comments.length == 0 && page != 0) {
-        //             onError("Page Not Exists")
-        //             updateComments(imgid, page - 1)
-        //         }
-        //     });
-        // }
-        // toggle button to change format
         document.getElementById("check").addEventListener("click", function (e) {
             let check = document.getElementById("check");
             let elmt = document.getElementById("create-add-form");

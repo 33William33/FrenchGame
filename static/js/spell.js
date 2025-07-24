@@ -69,9 +69,14 @@ let spell = (function () {
                             <div id="imageId" class="hide">${id}</div>
                             <img class="img-picture" src="${url}">
                         </div>
-                        <div class="below">
+                        <div class="navigation-controls">
+                            <button class="prev-question nav-btn nav-left">← Previous</button>
+                            <span class="question-counter">${JSON.parse(localStorage.getItem('index1')) + 1}/${JSON.parse(localStorage.getItem('random_list1')).length}</span>
+                            <button class="next-question nav-btn nav-right">Next →</button>
+                        </div>
+                        <div class="below compact">
                             <div class="quiz-section">
-                                <h3>${JSON.parse(localStorage.getItem('index1')) + 1}/${JSON.parse(localStorage.getItem('random_list1')).length} What is this in French?</h3>
+                                <h3>What is this in French?</h3>
                                 <div class="quiz">
                                     <form id="answer-form">
                                         <input type="text" 
@@ -82,8 +87,6 @@ let spell = (function () {
                                         <button type="submit">Check Answer</button>
                                     </form>
                                     <div class="quiz-feedback"></div>
-                                    <button class="prev-question">Previous Question</button>
-                                    <button class="next-question">Next Question →</button>
                                 </div>
                             </div>
                         </div>
@@ -97,6 +100,20 @@ let spell = (function () {
                 const nextBtn = elmt.querySelector('.next-question');
                 const prevBtn = elmt.querySelector('.prev-question');
 
+                // Update button states based on current position
+                const currentIndex = JSON.parse(localStorage.getItem('index1')) || 0;
+                const randomList = JSON.parse(localStorage.getItem('random_list1')) || [];
+                
+                // Disable previous button if at first question
+                if (currentIndex === 0) {
+                    prevBtn.disabled = true;
+                }
+                
+                // Disable next button if at last question
+                if (currentIndex >= randomList.length - 1) {
+                    nextBtn.disabled = true;
+                }
+
                 form.addEventListener('submit', (e) => {
                     e.preventDefault();
                     const userAnswer = input.value.toLowerCase().trim();
@@ -109,6 +126,8 @@ let spell = (function () {
                         gameSession.incorrectAnswers++;
                     }
                     
+                    gameSession.totalQuestions = gameSession.correctAnswers + gameSession.incorrectAnswers;
+                    
                     // Store question data
                     gameSession.questionsData.push({
                         questionId: id,
@@ -118,8 +137,6 @@ let spell = (function () {
                         isCorrect: isCorrect,
                         timestamp: new Date()
                     });
-                    
-                    gameSession.totalQuestions = gameSession.correctAnswers + gameSession.incorrectAnswers;
 
                     if (isCorrect) {
                         feedback.textContent = "Correct! 🎉";
@@ -303,11 +320,25 @@ let spell = (function () {
                 // Initialize new session
                 initializeGameSession();
                 
-                localStorage.setItem('index1', JSON.stringify(0));
-                apiService.getGraphs(function (err, imgts) {
-                    if (err) return onError(err);
-                    localStorage.setItem('random_list1', JSON.stringify(generateRandomList(imgts.length)));
-                });
+                // Use LevelManager if available
+                if (typeof LevelManager !== 'undefined') {
+                    // Initialize for spell game
+                    if (!LevelManager.initializeLevel('spell')) {
+                        return; // Will redirect to level selection if needed
+                    }
+                    
+                    // Reset index and generate new random list for current level
+                    localStorage.setItem('index1', JSON.stringify(0));
+                    LevelManager.generateRandomListForLevel('spell');
+                } else {
+                    // Fallback to old method
+                    localStorage.setItem('index1', JSON.stringify(0));
+                    apiService.getGraphs(function (err, imgts) {
+                        if (err) return onError(err);
+                        localStorage.setItem('random_list1', JSON.stringify(generateRandomList(imgts.length)));
+                    });
+                }
+                
                 updateGraph();
             } catch (error) {
                 return onError(error);
@@ -328,6 +359,15 @@ let spell = (function () {
 
         document.getElementById("bc").addEventListener('click', back);
         document.getElementById("ng").addEventListener('click', newGame);
+
+
+        // Add event listener for level select button
+        const levelSelectBtn = document.getElementById('level-select-btn');
+        if (levelSelectBtn) {
+            levelSelectBtn.addEventListener('click', function() {
+                window.location.href = '/group-select.html?game=spell';
+            });
+        }
 
         // Add event listener for logs button
         const spellLogsBtn = document.getElementById('spell-logs-btn');
@@ -358,21 +398,37 @@ let spell = (function () {
                 initializeGameSession();
             }
 
-            let storedList = JSON.parse(localStorage.getItem('random_list1')) || null;
-            let idx = JSON.parse(localStorage.getItem('index1')) || null;
-            if (idx === null) {
-                localStorage.setItem('index1', JSON.stringify(0));
-            }
-            if (storedList === null) {
-                apiService.getGraphs(function (err, imgts) {
-                    if (err) return onError(err);
-                    localStorage.setItem('random_list1', JSON.stringify(generateRandomList(imgts.length)));
-                });
+            // Use LevelManager if available
+            if (typeof LevelManager !== 'undefined') {
+                // Initialize for spell game
+                if (!LevelManager.initializeLevel('spell')) {
+                    return; // Will redirect to level selection if needed
+                }
+                
+                // Check if we need to initialize index (fresh start)
+                let currentIndex = localStorage.getItem('index1');
+                if (currentIndex === null) {
+                    localStorage.setItem('index1', JSON.stringify(0));
+                }
+                
+                console.log('Spell game initialized with level:', LevelManager.getCurrentLevelInfo());
+            } else {
+                // Fallback to old method
+                let storedList = JSON.parse(localStorage.getItem('random_list1')) || null;
+                let idx = JSON.parse(localStorage.getItem('index1')) || null;
+                if (idx === null) {
+                    localStorage.setItem('index1', JSON.stringify(0));
+                }
+                if (storedList === null) {
+                    apiService.getGraphs(function (err, imgts) {
+                        if (err) return onError(err);
+                        localStorage.setItem('random_list1', JSON.stringify(generateRandomList(imgts.length)));
+                    });
+                }
+                console.log(JSON.parse(localStorage.getItem('random_list1')));
             }
 
             updateGraph();
-            console.log(JSON.parse(localStorage.getItem('random_list1')));
-            //setTimeout(refresh, 5000);
         }());
 
     });

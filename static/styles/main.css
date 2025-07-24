@@ -207,6 +207,82 @@ body {
     transform: translateY(0);
 }
 
+/* Navigation Controls for Game Pages */
+.navigation-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    margin: 1rem 0;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.nav-left {
+    margin-right: auto;
+}
+
+.nav-right {
+    margin-left: auto;
+}
+
+.question-counter {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #667eea;
+    background: rgba(102, 126, 234, 0.1);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    border: 2px solid rgba(102, 126, 234, 0.2);
+    min-width: 80px;
+    text-align: center;
+}
+
+.nav-btn {
+    min-width: 120px;
+    justify-content: center;
+}
+
+.nav-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.nav-btn:disabled:hover {
+    transform: none !important;
+    box-shadow: none;
+    background: linear-gradient(135deg, #667eea, #87CEEB);
+}
+
+/* Level Select Button Styling */
+.level-btn {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    border: 2px solid rgba(240, 147, 251, 0.3);
+}
+
+.level-btn:hover {
+    background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+    border-color: rgba(245, 87, 108, 0.5);
+    box-shadow: 0 8px 25px rgba(245, 87, 108, 0.3);
+}
+
+/* Compact spacing for game content */
+.below.compact {
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+}
+
+.below.compact .quiz-section h3 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+    font-weight: 600;
+}
+
 /* Main Content */
 .main-content {
     max-width: 1200px;

@@ -57,6 +57,15 @@ let dropGame = (function() {
             window.location.href = '/';
         });
 
+        // Add event listener for level select button
+        const levelSelectBtn = document.getElementById('level-select-btn');
+        if (levelSelectBtn) {
+            levelSelectBtn.addEventListener('click', function() {
+                window.location.href = '/group-select.html?game=spell';
+            });
+        }
+
+
 
         dropLogsBtn.addEventListener('click', function() {
             window.location.href = '/logs';
@@ -98,6 +107,16 @@ let dropGame = (function() {
                     startBtn.textContent = 'Start Game';
                 }
             });
+        }
+
+        // Shuffle array using Fisher-Yates algorithm
+        function shuffleArray(array) {
+            const shuffled = [...array]; // Create a copy to avoid modifying original
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
         }
 
         // Initialize vocabulary loading
@@ -156,10 +175,11 @@ let dropGame = (function() {
 
             // Initialize game session on first start
             if (gameState.allGameWords.length === 0) {
-                gameState.allGameWords = [...VOCABULARY];
+                gameState.allGameWords = shuffleArray(VOCABULARY);
                 gameState.currentBatch = 0;
                 gameState.gameCompleted = false;
                 gameState.gameStartTime = new Date();
+                console.log('🎲 Words shuffled for random order!');
             }
 
             resetGameState();
@@ -207,7 +227,7 @@ let dropGame = (function() {
         }
 
         function getRandomWords(count) {
-            const shuffled = [...VOCABULARY].sort(() => 0.5 - Math.random());
+            const shuffled = shuffleArray(VOCABULARY);
             return shuffled.slice(0, count);
         }
 
@@ -258,8 +278,9 @@ let dropGame = (function() {
         function gameLoop() {
             if (!gameState.isPlaying) return;
 
-            // Update falling words
-            gameState.fallingWords.forEach((wordObj, index) => {
+            // Update falling words - iterate backwards to safely remove elements
+            for (let i = gameState.fallingWords.length - 1; i >= 0; i--) {
+                const wordObj = gameState.fallingWords[i];
                 if (!wordObj.matched) {
                     wordObj.y += gameState.wordSpeed;
                     wordObj.element.style.top = wordObj.y + 'px';
@@ -272,7 +293,7 @@ let dropGame = (function() {
                         playFalseSound();
                         
                         wordObj.element.remove();
-                        gameState.fallingWords.splice(index, 1);
+                        gameState.fallingWords.splice(i, 1);
                         gameState.incorrectAnswers++;
                         updateScoreDisplay();
                         showIndicator('incorrect');
@@ -281,7 +302,7 @@ let dropGame = (function() {
                         checkGameEnd();
                     }
                 }
-            });
+            }
 
             // Continue game loop
             gameState.gameTimer = requestAnimationFrame(gameLoop);
@@ -293,10 +314,28 @@ let dropGame = (function() {
             const userInput = frenchInput.value.trim().toLowerCase();
             if (userInput === '') return;
 
-            // Check against all falling words
+            // Function to remove French articles
+            function removeArticles(word) {
+                const cleanWord = word.toLowerCase().trim();
+                // Remove common French articles
+                if (cleanWord.startsWith('le ')) {
+                    return cleanWord.substring(3);
+                } else if (cleanWord.startsWith('la ')) {
+                    return cleanWord.substring(3);
+                } else if (cleanWord.startsWith('les ')) {
+                    return cleanWord.substring(4);
+                } else if (cleanWord.startsWith('l\' ') || cleanWord.startsWith('l\'')) {
+                    return cleanWord.replace(/^l['\s]*\s*/, '');
+                }
+                return cleanWord;
+            }
+
+            // Check against all falling words - iterate backwards to safely handle removal
             let matchFound = false;
-            gameState.fallingWords.forEach((wordObj, index) => {
-                if (!wordObj.matched && wordObj.french.toLowerCase() === userInput) {
+            for (let i = gameState.fallingWords.length - 1; i >= 0; i--) {
+                const wordObj = gameState.fallingWords[i];
+                const cleanCorrectAnswer = removeArticles(wordObj.french);
+                if (!wordObj.matched && cleanCorrectAnswer === userInput) {
                     // Match found!
                     matchFound = true;
                     wordObj.matched = true;
@@ -304,12 +343,21 @@ let dropGame = (function() {
                     // Visual effects
                     wordObj.element.classList.add('matched');
                     playCorrectSound();
+                    
+                    // Store the index for removal after animation
+                    const wordIndex = i;
                     setTimeout(() => {
                         wordObj.element.classList.add('exploding');
                         createFireworks(wordObj.element);
                         setTimeout(() => {
-                            wordObj.element.remove();
-                            gameState.fallingWords.splice(index, 1);
+                            if (wordObj.element.parentNode) {
+                                wordObj.element.remove();
+                            }
+                            // Find and remove the word object safely
+                            const currentIndex = gameState.fallingWords.indexOf(wordObj);
+                            if (currentIndex !== -1) {
+                                gameState.fallingWords.splice(currentIndex, 1);
+                            }
                             checkGameEnd();
                         }, 600);
                     }, 200);
@@ -318,8 +366,11 @@ let dropGame = (function() {
                     gameState.correctAnswers++;
                     updateScoreDisplay();
                     showIndicator('correct');
+                    
+                    // Only match the first occurrence
+                    break;
                 }
-            });
+            }
 
             if (!matchFound) {
                 // Wrong answer - shake input

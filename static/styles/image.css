@@ -30,10 +30,10 @@
   gap: 0.5rem;
 }
 
-.img-title::before {
+/* .img-title::before {
   content: "🇺🇸";
   font-size: 1.2rem;
-}
+} */
 
 .control {
   display: flex;
@@ -140,10 +140,10 @@
   gap: 0.5rem;
 }
 
-.img-username::before {
+/* .img-username::before {
   content: "🇫🇷";
   font-size: 1.1rem;
-}
+} */
 
 .delete-icon {
   width: 40px;

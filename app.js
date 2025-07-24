@@ -36,7 +36,7 @@ app.use(favicon(path.join(__dirname, 'static', 'favicon.ico')));
 //     apiKey: "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", // Replace with your key
 //   });
 
-const openai = new OpenAI({ apiKey: "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" });
+const openai = new OpenAI({ apiKey: "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！" });
 
 let upload = multer({ dest: path.join(__dirname, "uploads") });
 
@@ -354,9 +354,8 @@ const verifyToken = async (req, res, next) => {
   };
 
 app.post("/logout", function (req, res, next) {
-
     res.clearCookie("Authorization");
-    res.redirect('/');
+    res.redirect('/logout.html');
 });
 
 app.get("/api/imgs/", verifyToken, function (req, res, next) {

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=2">
+    <link href="styles/main.css" rel="stylesheet" type="text/css" />
+    <link href="styles/form.css" rel="stylesheet" type="text/css" />
+    <link href="styles/image.css" rel="stylesheet" type="text/css" />
+    <link href="styles/comment.css" rel="stylesheet" type="text/css" />
+    <link href="styles/group-select.css" rel="stylesheet" type="text/css" />
+    <!-- Add Google Fonts for better typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <title>Select Level - French Learning Game</title>
+</head>
+
+<body>
+    <header class="modern-header">
+        <div class="header-left">
+            <a href="/" id="title">
+                <i class="fas fa-layer-group"></i>
+                French Learning Game
+            </a>
+        </div>
+        <div class="header-right">
+            <div class="user-info" id="user-info">
+                <div class="user-avatar">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <div class="user-details">
+                    <span class="username" id="current-username">Loading...</span>
+                    <span class="user-role">Level Selection</span>
+                </div>
+            </div>
+            <button id="logs-btn" class="logs-btn">
+                <i class="fas fa-chart-line"></i>
+                My Stats
+            </button>
+            <form class="logout-form" id="logout-form" action="/logout" method="POST">
+                <button type="submit" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </button>
+            </form>
+        </div>
+    </header>
+
+    <nav class="navigation-bar">
+        <div class="nav-controls">
+            <button id="back-btn" class="nav-btn back-btn">
+                <i class="fas fa-arrow-left"></i>
+                Back to Gallery
+            </button>
+        </div>
+    </nav>
+
+    <main class="main-content game-content">
+        <div class="game-container">
+            <div class="game-header">
+                <h1 class="game-title" id="game-type-title">
+                    <i class="fas fa-layer-group"></i>
+                    Select Level for Match Game
+                </h1>
+                <p class="game-subtitle">Choose a level to start your French learning journey</p>
+            </div>
+
+            <div class="level-grid" id="level-grid">
+                <!-- Levels will be dynamically generated here -->
+            </div>
+
+            <div class="game-footer">
+                <div class="progress-info">
+                    <span id="total-words">0</span> total words available
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p>Loading levels...</p>
+        </div>
+    </div>
+
+    <!-- Error Display -->
+    <div id="error_box" class="error-modal">
+        <div class="error-content">
+            <h3>Error</h3>
+            <p id="error_message">An error occurred</p>
+            <button onclick="this.parentElement.parentElement.style.display='none'">Close</button>
+        </div>
+    </div>
+
+    <script src="js/level-manager.js"></script>
+    <script src="js/api-service.js"></script>
+    <script src="js/group-select.js"></script>
+
+</body>
+</html>

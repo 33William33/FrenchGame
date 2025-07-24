@@ -160,3 +160,48 @@
   align-items: center;
   margin-bottom: 1rem;
 }
+
+/* French Article Selector Styles */
+.french-input-group {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+.article-select {
+  min-width: 80px;
+  padding: 0.75rem 0.5rem;
+  border: 2px solid #e9ecef;
+  border-radius: 10px;
+  font-size: 1rem;
+  background: #f8f9fa;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.article-select:focus {
+  outline: none;
+  border-color: #667eea;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.french-word-input {
+  flex: 1;
+  margin-bottom: 0 !important;
+}
+
+.input-help {
+  display: block;
+  color: #6c757d;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.input-help i {
+  color: #667eea;
+}
