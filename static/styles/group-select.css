@@ -11,6 +11,12 @@
     position: relative;
     overflow-x: auto;
     gap: 2rem;
+    background-image: url('../media/roadmap.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
 }
 
 .game-subtitle {
