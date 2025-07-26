@@ -132,6 +132,23 @@ let apiService = (function () {
         send("GET", url, null, callback);
     };
 
+    // Drop Sentence Game API functions
+    // Log drop sentence game result
+    module.logDropSentenceGame = function(gameData, callback) {
+        send("POST", "/api/drop-sentence-game/log", gameData, callback);
+    };
+
+    // Update drop sentence game session
+    module.updateDropSentenceGame = function(logId, gameData, callback) {
+        send("PUT", "/api/drop-sentence-game/log/" + logId, gameData, callback);
+    };
+
+    // Get drop sentence game statistics
+    module.getDropSentenceGameStats = function(userId, callback) {
+        const url = userId ? `/api/drop-sentence-game/stats/${userId}` : '/api/drop-sentence-game/stats';
+        send("GET", url, null, callback);
+    };
+
     // // get image comments
     // module.getComments = function(imageId, page, callback) {
     //     send("GET", "/api/comments/" + imageId + "/" +
@@ -159,6 +176,19 @@ let apiService = (function () {
     //         return callback(null);
     //     });
     // };
+
+    // Sentence management functions
+    module.getSentence = function(imageId, callback) {
+        send("GET", "/api/sentences/" + imageId, null, callback);
+    };
+
+    module.saveSentence = function(imageId, sentence, callback) {
+        send("POST", "/api/sentences/" + imageId, { sentence: sentence }, callback);
+    };
+
+    module.deleteSentence = function(imageId, callback) {
+        send("DELETE", "/api/sentences/" + imageId, null, callback);
+    };
 
     return module;
 })();

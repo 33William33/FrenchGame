@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=2">
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; media-src 'self' blob:; object-src 'none';">
+
+    <link href="styles/main.css" rel="stylesheet" type="text/css" />
+    <link href="styles/form.css" rel="stylesheet" type="text/css" />
+    <link href="styles/image.css" rel="stylesheet" type="text/css" />
+    <link href="styles/comment.css" rel="stylesheet" type="text/css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <title>Drop Sentence Game - French Learning</title>
+</head>
+
+<body>
+    <header class="modern-header">
+        <div class="header-left">
+            <a href="/" id="title">
+                <i class="fas fa-language"></i>
+                French Learning Game
+            </a>
+        </div>
+        <div class="header-right">
+            <div class="user-info" id="user-info">
+                <div class="user-avatar">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <div class="user-details">
+                    <span class="username" id="current-username">Loading...</span>
+                    <span class="user-role">Drop Sentence</span>
+                </div>
+            </div>
+            <button id="drop-sentence-logs-btn" class="logs-btn">
+                <i class="fas fa-chart-line"></i>
+                My Stats
+            </button>
+            <form class="logout-form" id="logout-form" action="/logout" method="POST">
+                <button type="submit" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </button>
+            </form>
+        </div>
+    </header>
+
+    <nav class="navigation-bar">
+        <div class="nav-controls">
+            <button id="bc" class="nav-btn back-btn">
+                <i class="fas fa-arrow-left"></i>
+                Back to Gallery
+            </button>
+            
+            <button id="level-select-btn" class="nav-btn level-btn">
+                <i class="fas fa-layer-group"></i>
+                Level Select
+            </button>
+        </div>
+    </nav>
+
+    <main class="main-content game-content">
+        <div class="game-container">
+        <div class="game-header">
+            <h1>
+                <i class="fas fa-file-text"></i>
+                Drop Sentence Game
+            </h1>
+            <p>Complete the sentence by selecting the correct French word as sentences fall from the sky!</p>
+        </div>
+
+        <div class="drop-game-area">
+            <!-- Game Canvas -->
+            <div id="game-canvas" class="drop-canvas">
+                <div class="score-display">
+                    <div class="score-item correct">
+                        <i class="fas fa-check"></i>
+                        <span id="correct-count">0</span>
+                    </div>
+                    <div class="score-item incorrect">
+                        <i class="fas fa-times"></i>
+                        <span id="incorrect-count">0</span>
+                    </div>
+                </div>
+                
+                <!-- Falling sentences will be dynamically added here -->
+                
+                <!-- Game status indicators -->
+                <div id="correct-indicator" class="indicator correct-flash">
+                    <i class="fas fa-check-circle"></i>
+                    Correct!
+                </div>
+                
+                <!-- Fireworks container -->
+                <div id="fireworks-container"></div>
+            </div>
+
+            <!-- Word Selection Area -->
+            <div class="word-selection-area">
+                <!-- Sentences will fall and show blanks directly in the canvas -->
+                
+                <div class="word-options">
+                    <h4>Select the correct word:</h4>
+                    <div id="word-buttons-container" class="word-buttons">
+                        <!-- Word selection buttons will be dynamically added here -->
+                    </div>
+                </div>
+                
+                <div class="game-controls">
+                    <button id="start-game-btn" class="game-control-btn start">
+                        <i class="fas fa-play"></i>
+                        Start Game
+                    </button>
+                    <button id="restart-game-btn" class="game-control-btn restart" style="display: none;">
+                        <i class="fas fa-redo"></i>
+                        Play Again
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Over Modal -->
+        <div id="game-over-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <h2>
+                    <i class="fas fa-flag-checkered"></i>
+                    Game Over!
+                </h2>
+                <div class="game-results">
+                    <div class="result-item correct">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Correct: <span id="final-correct">0</span></span>
+                    </div>
+                    <div class="result-item incorrect">
+                        <i class="fas fa-times-circle"></i>
+                        <span>Missed: <span id="final-incorrect">0</span></span>
+                    </div>
+                    <div class="result-item score">
+                        <i class="fas fa-star"></i>
+                        <span>Score: <span id="final-score">0</span>%</span>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button id="play-again-btn" class="submit-btn">
+                        <i class="fas fa-redo"></i>
+                        Play Again
+                    </button>
+                    <button id="back-to-menu-btn" class="submit-btn secondary">
+                        <i class="fas fa-home"></i>
+                        Back to Menu
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="modern-footer">
+        <div class="footer-content">
+            <p>&copy; 2025 French Learning Game</p>
+            <a href="credits.html">
+                <i class="fas fa-info-circle"></i>
+                Credits
+            </a>
+        </div>
+    </footer>
+
+    <script src="js/api-service.js"></script>
+    <script src="js/level-manager.js"></script>
+    <script src="js/drop-sentence.js"></script>
+</body>
+
+</html>

@@ -36,7 +36,8 @@ let groupSelect = (function () {
             const gameNames = {
                 'match': 'Match Game',
                 'spell': 'Spelling Game',
-                'drop': 'Drop Game'
+                'drop': 'Drop Game',
+                'drop-sentence': 'Drop Sentence Game'
             };
             
             titleElement.textContent = `Select Level for ${gameNames[gameType] || 'Game'}`;
@@ -225,7 +226,8 @@ let groupSelect = (function () {
                 const gameUrls = {
                     'match': '/game.html',
                     'spell': '/spell.html',
-                    'drop': '/drop.html?newLevel=true'
+                    'drop': '/drop.html?newLevel=true',
+                    'drop-sentence': '/drop-sentence.html?newLevel=true'
                 };
                 
                 window.location.href = gameUrls[gameType] || '/game.html';

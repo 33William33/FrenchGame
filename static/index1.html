@@ -4,6 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; media-src 'self' blob: data:; connect-src 'self'; object-src 'none';">
 
     <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
     <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=2">
@@ -17,7 +18,7 @@
     <title>French Learning Game</title>
 </head>
 
-<body>
+<body class="page-gallery">
     <header class="modern-header">
         <div class="header-left">
             <a href="/" id="title">
@@ -71,6 +72,11 @@
             <button id="drop-game" class="nav-btn drop-btn">
                 <i class="fas fa-meteor"></i>
                 Drop Word Game
+            </button>
+            
+            <button id="drop-sentence-game" class="nav-btn drop-sentence-btn">
+                <i class="fas fa-file-text"></i>
+                Drop Sentence Game
             </button>
         </div>
     </nav>
@@ -165,16 +171,6 @@
                 <div class="modal-meta">
                     <div class="modal-date" id="modalDate">
                         Created: --
-                    </div>
-                    <div class="modal-actions">
-                        <button class="modal-action-btn" id="modalEdit">
-                            <i class="fas fa-edit"></i>
-                            Edit
-                        </button>
-                        <button class="modal-action-btn delete" id="modalDelete">
-                            <i class="fas fa-trash"></i>
-                            Delete
-                        </button>
                     </div>
                 </div>
             </div>

@@ -13,7 +13,7 @@ let dropGame = (function() {
         wordIndex: 0,
         gameStartTime: null,
         totalWords: 5,
-        wordSpeed: 0.5, // pixels per frame
+        wordSpeed: 0.25, // pixels per frame
         currentBatch: 0,
         wordsPerBatch: 5,
         allGameWords: [], // All words for the entire session
@@ -82,10 +82,10 @@ let dropGame = (function() {
         });
 
         // Add event listener for new game button if it exists
-        const newGameBtn = document.getElementById('ng');
-        if (newGameBtn) {
-            newGameBtn.addEventListener('click', newGame);
-        }
+        // const newGameBtn = document.getElementById('ng');
+        // if (newGameBtn) {
+        //     newGameBtn.addEventListener('click', newGame);
+        // }
 
         // Load user info
         loadUserInfo();
@@ -158,6 +158,28 @@ let dropGame = (function() {
 
         // New game function that resets everything for a fresh start
         function newGame() {
+            // Before clearing everything, ensure current game is properly logged if it was completed
+            if (gameState.gameCompleted && gameState.currentLogId && gameState.questionResults.length > 0) {
+                console.log('Saving completed game before starting new game...');
+                
+                // Calculate final stats
+                const totalWordsProcessed = gameState.correctAnswers + gameState.incorrectAnswers;
+                const score = totalWordsProcessed > 0 ? Math.round((gameState.correctAnswers / totalWordsProcessed) * 100) : 0;
+                const completionTime = gameState.gameStartTime ? Math.round((new Date() - gameState.gameStartTime) / 1000) : 0;
+                
+                // Save the completed game log one final time
+                logDropGame(score, completionTime, true);
+            }
+            
+            // Now reset everything for a completely fresh start
+            gameState.allGameWords = [];
+            gameState.currentBatch = 0;
+            gameState.correctAnswers = 0;
+            gameState.incorrectAnswers = 0;
+            gameState.gameStartTime = null;
+            gameState.gameCompleted = false;
+            gameState.currentLogId = null; // Reset log ID for new game session
+            gameState.questionResults = []; // Reset individual question tracking
             // Clear any drop game specific data
             localStorage.removeItem('drop_game_data');
             
@@ -437,8 +459,7 @@ let dropGame = (function() {
         }
 
         function startWordDropping() {
-            let dropDelay = 2000; // 2 seconds between words
-            
+            let dropDelay = 3000; // 3 seconds between words
             gameState.wordDropTimer = setInterval(() => {
                 if (gameState.wordIndex < gameState.currentWords.length) {
                     dropWord(gameState.currentWords[gameState.wordIndex]);

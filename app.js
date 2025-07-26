@@ -24,7 +24,19 @@ const app = express();
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-app.use(helmet());
+app.use(
+  helmet.contentSecurityPolicy({
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com"],
+      mediaSrc: ["'self'", "blob:", "data:"],
+      connectSrc: ["'self'"],
+      objectSrc: ["'none'"],
+    },
+  })
+);
 app.use(cors());
 app.use(cookieParser());
 
@@ -36,7 +48,7 @@ app.use(favicon(path.join(__dirname, 'static', 'favicon.ico')));
 //     apiKey: "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", // Replace with your key
 //   });
 
-const openai = new OpenAI({ apiKey: "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！" });
+const openai = new OpenAI({ apiKey: "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" });
 
 let upload = multer({ dest: path.join(__dirname, "uploads") });
 
@@ -66,6 +78,11 @@ let dropGameLogs = new Datastore({
     timestampData: true,
 });
 
+let dropSentenceGameLogs = new Datastore({
+    filename: path.join(__dirname, "db", "drop_sentence_game_logs.db"),
+    timestampData: true,
+});
+
 let images = new Datastore({
     filename: path.join(__dirname, "db", "images.db"),
     timestampData: true,
@@ -74,6 +91,10 @@ let images = new Datastore({
 //     filename: path.join(__dirname, "db", "comments.db"),
 //     timestampData: true,
 // });
+let sentences = new Datastore({
+    filename: path.join(__dirname, "db", "sentences.db"),
+    timestampData: true,
+});
 let serverConfig = new Datastore({
     filename: path.join(__dirname, "db", "config.db"),
     timestampData: true,
@@ -1006,17 +1027,284 @@ app.get("/api/drop-game/details/:gameId", verifyToken, function (req, res, next)
     });
 });
 
+// Drop Sentence Game API endpoints
+// Log Drop Sentence Game Result
+app.post("/api/drop-sentence-game/log", verifyToken, function (req, res, next) {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const { totalSentences, correctAnswers, incorrectAnswers, completionTime, gameData, level, questionResults, duration } = req.body;
+
+    // Find the highest existing ID and increment it
+    dropSentenceGameLogs.find({}).sort({ _id: -1 }).limit(1).exec(function (err, docs) {
+        if (err) return res.status(500).json({ error: err.message });
+
+        const nextId = docs.length > 0 ? docs[0]._id + 1 : 1;
+
+        const logEntry = {
+            _id: nextId,
+            userId: req.user._id,
+            username: req.user.username,
+            totalQuestions: (correctAnswers || 0) + (incorrectAnswers || 0), // Calculate total questions like other games
+            correctAnswers: correctAnswers || 0,
+            incorrectAnswers: incorrectAnswers || 0,
+            score: correctAnswers && totalSentences ? Math.round((correctAnswers / totalSentences) * 100) : 0,
+            completionTime: completionTime || (duration ? Math.round(duration / 1000) : null), // in seconds
+            duration: duration || null, // in milliseconds
+            level: level !== undefined ? level : 0, // level information (0-based)
+            gameData: gameData || null, // detailed game session data like other games
+            gameType: 'drop-sentence',
+            date: new Date()
+        };
+
+        dropSentenceGameLogs.insert(logEntry, function (err, doc) {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json({ success: true, logId: doc._id, score: logEntry.score });
+        });
+    });
+});
+
+// Update Drop Sentence Game Log
+app.put("/api/drop-sentence-game/log/:logId", verifyToken, function (req, res, next) {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const logId = parseInt(req.params.logId);
+    const { correctAnswers, incorrectAnswers, completionTime, gameData, questionResults, gameEndTime, duration } = req.body;
+
+    const updateData = {};
+    if (correctAnswers !== undefined) updateData.correctAnswers = correctAnswers;
+    if (incorrectAnswers !== undefined) updateData.incorrectAnswers = incorrectAnswers;
+    if (completionTime !== undefined) updateData.completionTime = completionTime;
+    if (duration !== undefined) {
+        updateData.duration = duration;
+        updateData.completionTime = Math.round(duration / 1000); // Convert to seconds
+    }
+    if (gameData !== undefined) updateData.gameData = gameData;
+    if (questionResults !== undefined) updateData.questionResults = questionResults;
+    if (gameEndTime !== undefined) updateData.gameEndTime = gameEndTime;
+
+    // Calculate totalQuestions like other games
+    if (correctAnswers !== undefined || incorrectAnswers !== undefined) {
+        updateData.totalQuestions = (correctAnswers || 0) + (incorrectAnswers || 0);
+        const total = updateData.totalQuestions;
+        updateData.score = total > 0 ? Math.round(((correctAnswers || 0) / total) * 100) : 0;
+    }
+
+    dropSentenceGameLogs.update({ _id: logId, userId: req.user._id }, { $set: updateData }, {}, function (err, numReplaced) {
+        if (err) return res.status(500).json({ error: err.message });
+        if (numReplaced === 0) {
+            return res.status(404).json({ error: 'Log entry not found or unauthorized' });
+        }
+        res.json({ success: true, logId: logId, updated: true });
+    });
+});
+
+// Get Drop Sentence Game Stats
+app.get("/api/drop-sentence-game/stats/:userId?", verifyToken, function (req, res, next) {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const userId = req.params.userId ? parseInt(req.params.userId) : req.user._id;
+    
+    // Only allow users to see their own stats unless admin functionality is added later
+    if (userId !== req.user._id) {
+        return res.status(403).json({ error: 'Access denied' });
+    }
+
+    dropSentenceGameLogs.find({ userId: userId }).sort({ date: -1 }).exec(function (err, logs) {
+        if (err) return res.status(500).json({ error: err.message });
+        
+        // Recalculate scores for records where score is 0 but there are correct answers
+        const logsWithFixedScores = logs.map(log => {
+            let score = log.score;
+            if (score === 0 && log.correctAnswers > 0) {
+                const totalQuestions = log.totalQuestions || (log.correctAnswers + log.incorrectAnswers);
+                score = totalQuestions > 0 ? Math.round((log.correctAnswers / totalQuestions) * 100) : 0;
+            }
+            return { ...log, score: score };
+        });
+        
+        const stats = {
+            totalGames: logs.length,
+            averageScore: logsWithFixedScores.length > 0 ? Math.round(logsWithFixedScores.reduce((sum, log) => sum + log.score, 0) / logsWithFixedScores.length) : 0,
+            bestScore: logsWithFixedScores.length > 0 ? Math.max(...logsWithFixedScores.map(log => log.score)) : 0,
+            totalCorrectAnswers: logs.reduce((sum, log) => sum + log.correctAnswers, 0),
+            totalQuestions: logs.reduce((sum, log) => sum + (log.totalQuestions || (log.correctAnswers + log.incorrectAnswers)), 0),
+            recentGames: logsWithFixedScores.map(game => ({
+                ...game,
+                totalQuestions: game.totalQuestions || (game.correctAnswers + game.incorrectAnswers)
+            })) // All games, sorted by date (newest first)
+        };
+        
+        res.json(stats);
+    });
+});
+
+// Get Individual Drop Sentence Game Details
+app.get("/api/drop-sentence-game/details/:gameId", verifyToken, function (req, res, next) {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const gameId = parseInt(req.params.gameId);
+    
+    dropSentenceGameLogs.findOne({ _id: gameId, userId: req.user._id }, function (err, game) {
+        if (err) return res.status(500).json({ error: err.message });
+        if (!game) return res.status(404).json({ error: 'Game not found' });
+        
+        // Recalculate score if it's 0 but there are correct answers
+        let score = game.score;
+        if (score === 0 && game.correctAnswers > 0) {
+            const totalQuestions = game.totalQuestions || (game.correctAnswers + game.incorrectAnswers);
+            score = totalQuestions > 0 ? Math.round((game.correctAnswers / totalQuestions) * 100) : 0;
+        }
+        
+        // Format the game data for the logs display
+        const formattedGame = {
+            ...game,
+            score: score, // Use the recalculated score
+            totalQuestions: game.totalQuestions || (game.correctAnswers + game.incorrectAnswers),
+            completionTime: game.completionTime || (game.duration ? Math.round(game.duration / 1000) : null),
+            date: game.date || game.createdAt,
+            gameData: game.gameData || {
+                questions: (game.questionResults || []).map(result => ({
+                    questionId: result.questionId || 1,
+                    question: result.sentence || 'N/A',
+                    correctAnswer: result.correctAnswer || result.correctWord,
+                    selectedAnswer: result.selectedAnswer || result.selectedWord || 'No answer',
+                    userAnswer: result.selectedAnswer || result.selectedWord || 'No answer',
+                    isCorrect: result.isCorrect,
+                    timestamp: result.timestamp
+                }))
+            }
+        };
+        
+        res.json(formattedGame);
+    });
+});
+
+// Proxy endpoint for Google Translate TTS to avoid CORS issues
+app.get("/api/tts/:text", verifyToken, async function (req, res, next) {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    try {
+        const text = decodeURIComponent(req.params.text);
+        const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=fr&client=tw-ob&q=${encodeURIComponent(text)}`;
+        
+        const response = await axios.get(ttsUrl, {
+            responseType: 'arraybuffer',
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            },
+            timeout: 10000
+        });
+
+        res.set({
+            'Content-Type': 'audio/mpeg',
+            'Content-Length': response.data.length,
+            'Cache-Control': 'public, max-age=3600'
+        });
+        
+        res.send(response.data);
+    } catch (error) {
+        console.error('TTS proxy error:', error.message);
+        res.status(500).json({ error: 'TTS service unavailable' });
+    }
+});
+
+// Sentences API endpoints
+// Get sentence for a specific image
+app.get("/api/sentences/:imageId", verifyToken, function (req, res, next) {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const imageId = parseInt(req.params.imageId);
+    sentences.findOne({ imageId: imageId }, function (err, sentence) {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        if (!sentence) return res.status(404).json({ error: 'Sentence not found' });
+        res.json(sentence);
+    });
+});
+
+// Create or update sentence for a specific image
+app.post("/api/sentences/:imageId", verifyToken, function (req, res, next) {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const imageId = parseInt(req.params.imageId);
+    const { sentence } = req.body;
+
+    if (!sentence || sentence.trim() === '') {
+        return res.status(400).json({ error: 'Sentence is required' });
+    }
+
+    // First get the image to get the word (author field)
+    images.findOne({ _id: imageId }, function (err, image) {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        if (!image) return res.status(404).json({ error: 'Image not found' });
+
+        // Check if sentence already exists
+        sentences.findOne({ imageId: imageId }, function (err, existingSentence) {
+            if (err) return res.status(500).json({ error: 'Database error' });
+
+            const sentenceData = {
+                imageId: imageId,
+                word: image.author,
+                sentence: sentence.trim()
+            };
+
+            if (existingSentence) {
+                // Update existing sentence
+                sentences.update({ imageId: imageId }, { $set: sentenceData }, {}, function (err, numReplaced) {
+                    if (err) return res.status(500).json({ error: 'Database error' });
+                    res.json({ message: 'Sentence updated successfully', ...sentenceData });
+                });
+            } else {
+                // Create new sentence
+                sentences.insert(sentenceData, function (err, newSentence) {
+                    if (err) return res.status(500).json({ error: 'Database error' });
+                    res.status(201).json(newSentence);
+                });
+            }
+        });
+    });
+});
+
+// Delete sentence for a specific image
+app.delete("/api/sentences/:imageId", verifyToken, function (req, res, next) {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const imageId = parseInt(req.params.imageId);
+    sentences.remove({ imageId: imageId }, {}, function (err, numRemoved) {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        if (numRemoved === 0) return res.status(404).json({ error: 'Sentence not found' });
+        res.json({ message: 'Sentence deleted successfully' });
+    });
+});
+
 http.createServer(app).listen(PORT, function (err) {
     if (err) console.log(err);
     else {
         console.log("HTTP server on http://localhost:%s", PORT);
         images.loadDatabase()
         // comments.loadDatabase()
+        sentences.loadDatabase()
         serverConfig.loadDatabase()
         logs.loadDatabase()
         matchGameLogs.loadDatabase()
         spellingGameLogs.loadDatabase()
         dropGameLogs.loadDatabase()
+        dropSentenceGameLogs.loadDatabase()
         serverConfig.count({}, function (err, count) {
             if (err) console.log(err)
             if (count == 0) {

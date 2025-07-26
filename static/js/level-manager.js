@@ -12,7 +12,7 @@ const LevelManager = (function () {
      * @param {Object} levelData - Level information
      * @param {number} levelData.startIndex - Starting image index (1-based)
      * @param {number} levelData.endIndex - Ending image index (1-based)
-     * @param {string} levelData.gameType - Type of game (match, spell, drop)
+     * @param {string} levelData.gameType - Type of game (match, spell, drop, drop-sentence)
      * @param {number} levelData.groupIndex - Group index (0-based)
      * @param {Array} levelData.images - Array of image objects for this level
      */
@@ -112,8 +112,8 @@ const LevelManager = (function () {
             return false;
         }
 
-        // Reset game indices for match/spell games (drop game doesn't use these)
-        if (gameType !== 'drop') {
+        // Reset game indices for match/spell games (drop games don't use these)
+        if (gameType !== 'drop' && gameType !== 'drop-sentence') {
             const indexKey = gameType === 'spell' ? 'index1' : 'index';
             localStorage.setItem(indexKey, JSON.stringify(0));
             
@@ -124,6 +124,8 @@ const LevelManager = (function () {
         // Clear game-specific data
         if (gameType === 'drop') {
             localStorage.removeItem('drop_game_data');
+        } else if (gameType === 'drop-sentence') {
+            localStorage.removeItem('drop_sentence_game_data');
         } else if (gameType === 'spell') {
             localStorage.removeItem('spell_game_answers');
         } else {
@@ -164,7 +166,7 @@ const LevelManager = (function () {
 
     /**
      * Initialize level for a specific game
-     * @param {string} gameType - Game type (match, spell, drop)
+     * @param {string} gameType - Game type (match, spell, drop, drop-sentence)
      * @param {number} groupIndex - Group index (optional, for validation)
      */
     function initializeLevel(gameType, groupIndex = null) {
@@ -204,6 +206,28 @@ const LevelManager = (function () {
         return `Level ${levelData.groupIndex + 1}: ${levelData.startIndex}-${levelData.endIndex} (${levelData.gameType})`;
     }
 
+    /**
+     * Get array of image IDs for the current level
+     * @returns {Array} Array of image IDs or empty array if no level
+     */
+    function getCurrentLevelImages() {
+        const levelData = getLevelData();
+        if (!levelData || !levelData.images) return [];
+        
+        return levelData.images.map(img => img._id);
+    }
+
+    /**
+     * Get current level number (1-based)
+     * @returns {number} Current level number or 1 if no level selected
+     */
+    function getCurrentLevel() {
+        const levelData = getLevelData();
+        if (!levelData) return 1;
+        
+        return levelData.groupIndex + 1; // Convert from 0-based to 1-based
+    }
+
     // Public API
     return {
         saveLevelData,
@@ -214,6 +238,8 @@ const LevelManager = (function () {
         generateRandomListForLevel,
         initializeLevel,
         getCurrentLevelInfo,
+        getCurrentLevelImages,
+        getCurrentLevel,
         startNewGame,
         
         // Constants

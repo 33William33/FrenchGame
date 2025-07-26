@@ -49,14 +49,27 @@ let index = (function () {
             const modalEnglish = document.getElementById('modalEnglish');
             const modalFrench = document.getElementById('modalFrench');
             const modalDate = document.getElementById('modalDate');
-            const modalEdit = document.getElementById('modalEdit');
-            const modalDelete = document.getElementById('modalDelete');
 
             // Populate modal with image data
             modalImage.src = imageData.url;
             modalTitle.textContent = `${imageData.imageName} - ${imageData.author}`;
             modalEnglish.textContent = imageData.imageName;
-            modalFrench.textContent = imageData.author;
+            
+            // Add pronunciation button to French word in modal
+            modalFrench.innerHTML = `
+                ${imageData.author}
+                <button class="pronunciation-btn modal-pronunciation" data-french-text="${imageData.author}" title="Listen to French pronunciation">
+                    <i class="fas fa-volume-up"></i>
+                </button>
+            `;
+            
+            // Add event listener for modal pronunciation button
+            const modalPronunciationBtn = modalFrench.querySelector('.pronunciation-btn');
+            modalPronunciationBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const frenchText = this.getAttribute('data-french-text');
+                playFrenchPronunciation(frenchText, this);
+            });
             
             // Format date
             const dateStr = new Date(imageData.date).toLocaleDateString('en-US', {
@@ -68,22 +81,6 @@ let index = (function () {
             });
             modalDate.textContent = `Created: ${dateStr}`;
 
-            // Set up action buttons
-            modalEdit.onclick = function() {
-                // TODO: Implement edit functionality
-                closeImageModal();
-                onError('Edit functionality coming soon!');
-            };
-
-            modalDelete.onclick = function() {
-                if (confirm(`Are you sure you want to delete "${imageData.imageName}"?`)) {
-                    apiService.deleteImage(imageData._id, function (err, res) {
-                        if (err) return onError(err);
-                        closeImageModal();
-                        updateGraph();
-                    });
-                }
-            };
 
             // Show modal
             modal.classList.add('show');
@@ -132,7 +129,11 @@ let index = (function () {
                                   <div class="img-id">📌 #${id}</div>
                                   <div class="img-level">🎯 Level: ${level}</div>
                               </div>
-                              <div class="img-title">🍔English: ${title}</div>
+                              <div class="img-title">🏆French: ${author} 
+                              <button class="pronunciation-btn" data-french-text="${author}" title="Listen to French pronunciation">
+                                      <i class="fas fa-volume-up"></i>
+                              </button>
+                              </div>
                               <div class= "control">
                               <div class="left-icon icon"></div>
                               <div id="imageId" class="hide">${id}</div>
@@ -140,10 +141,45 @@ let index = (function () {
                               <div class="right-icon icon"></div>
                               </div>
                               <div class="below">
-                              <div class="img-username">🏆French: ${author}</div>
-                              <div class="delete-icon icon"></div>
+                              <div class="img-username">
+                                  🍔English: ${title}
+                              </div>
+                              <div class="sentence-section">
+                                  <div class="sentence-display" id="sentence-${id}">
+                                      <div class="sentence-header">
+                                          <div class="sentence-label">💬 Sentence:</div>
+                                          <div class="sentence-actions">
+                                              <button class="sentence-btn edit-sentence" data-image-id="${id}" data-french-word="${author}" title="Add/Edit sentence">
+                                                  <i class="fas fa-edit"></i> Edit
+                                              </button>
+                                          </div>
+                                      </div>
+                                      <div class="sentence-text">Loading...</div>
+                                  </div>
+                              </div>
                               </div>
                               </div>`;
+            
+            // Add event listener for pronunciation button
+            const pronunciationBtn = elmt.querySelector('.pronunciation-btn');
+            pronunciationBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const frenchText = this.getAttribute('data-french-text');
+                playFrenchPronunciation(frenchText, this);
+            });
+            
+            // Add event listeners for sentence management
+            const editSentenceBtn = elmt.querySelector('.edit-sentence');
+            
+            editSentenceBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const imageId = this.getAttribute('data-image-id');
+                const frenchWord = this.getAttribute('data-french-word');
+                showSentenceEditModal(imageId, frenchWord);
+            });
+            
+            // Load existing sentence for this image
+            loadSentence(id);
             
             // Add click handler for image maximization
             const imgElement = elmt.querySelector(".img-picture");
@@ -175,16 +211,6 @@ let index = (function () {
                 .addEventListener("click", function (e) {
                     let imgidPer = id
                     displayImage(imgidPer + 1)
-                });
-            //update after delete with situations
-            elmt
-                .querySelector(".delete-icon")
-                .addEventListener("click", function (e) {
-                    apiService.deleteImage(id, function (err, res) {
-                        if (err) return onError(err)
-                        updateGraph()
-                    });
-
                 });
             document.querySelector("#display").prepend(elmt);
             // createCmtForm(id);
@@ -293,6 +319,14 @@ let index = (function () {
             }
         }
 
+        async function initializeDropSentenceGame() {
+            try {
+                window.location.href = '/group-select.html?game=drop-sentence';
+            } catch (error) {
+                return onError(error);
+            }
+        }
+
         document.getElementById("check").addEventListener("click", function (e) {
             let check = document.getElementById("check");
             let elmt = document.getElementById("create-add-form");
@@ -311,6 +345,8 @@ let index = (function () {
 
         document.getElementById("drop-game").addEventListener('click', initializeDropGame);
 
+        document.getElementById("drop-sentence-game").addEventListener('click', initializeDropSentenceGame);
+
         document
             .getElementById("create-add-form")
             .addEventListener("submit", function (e) {
@@ -322,6 +358,141 @@ let index = (function () {
                 document.getElementById("display").prepend(elmt);
                 updateImage(id);
             });
+
+        // Sentence management functions
+        function loadSentence(imageId) {
+            apiService.getSentence(imageId, function(err, data) {
+                const sentenceDisplay = document.getElementById(`sentence-${imageId}`);
+                
+                if (err || !data || !data.sentence) {
+                    if (sentenceDisplay) {
+                        sentenceDisplay.querySelector('.sentence-text').textContent = 'Click "Edit" to add sentence.';
+                        sentenceDisplay.querySelector('.sentence-text').style.fontStyle = 'italic';
+                        sentenceDisplay.querySelector('.sentence-text').style.color = '#6c757d';
+                    }
+                } else {
+                    if (sentenceDisplay) {
+                        sentenceDisplay.querySelector('.sentence-text').textContent = data.sentence;
+                        sentenceDisplay.querySelector('.sentence-text').style.fontStyle = 'normal';
+                        sentenceDisplay.querySelector('.sentence-text').style.color = '#2c3e50';
+                    }
+                }
+            });
+        }
+        
+        function showSentenceEditModal(imageId, frenchWord) {
+            // Get current sentence
+            apiService.getSentence(imageId, function(err, data) {
+                const currentSentence = (data && data.sentence) ? data.sentence : '';
+                
+                // Create modal HTML
+                const modalHtml = `
+                    <div class="sentence-modal" id="sentenceModal">
+                        <div class="sentence-modal-content">
+                            <div class="sentence-modal-header">
+                                <h3><i class="fas fa-edit"></i> Edit Sentence for "${frenchWord}"</h3>
+                                <button class="sentence-modal-close">&times;</button>
+                            </div>
+                            <div class="sentence-modal-body">
+                                <label for="sentenceInput">Enter a sentence using the French word "${frenchWord}":</label>
+                                <textarea id="sentenceInput" placeholder="Example: Je mange une pomme rouge." maxlength="500">${currentSentence}</textarea>
+                                <div class="sentence-modal-actions">
+                                    <button class="sentence-save-btn">
+                                        <i class="fas fa-save"></i> Save Sentence
+                                    </button>
+                                    <button class="sentence-cancel-btn">
+                                        <i class="fas fa-times"></i> Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Add modal to page
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+                const modal = document.getElementById('sentenceModal');
+                const textarea = document.getElementById('sentenceInput');
+                
+                // Focus and select text
+                setTimeout(() => {
+                    textarea.focus();
+                    if (currentSentence) {
+                        textarea.select();
+                    }
+                }, 100);
+                
+                // Event listeners
+                modal.querySelector('.sentence-modal-close').addEventListener('click', closeSentenceModal);
+                modal.querySelector('.sentence-cancel-btn').addEventListener('click', closeSentenceModal);
+                modal.querySelector('.sentence-save-btn').addEventListener('click', function() {
+                    saveSentence(imageId, frenchWord, textarea.value.trim());
+                });
+                
+                // Close on ESC key
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape' && modal) {
+                        closeSentenceModal();
+                    }
+                });
+                
+                // Close on background click
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        closeSentenceModal();
+                    }
+                });
+            });
+        }
+        
+        function closeSentenceModal() {
+            const modal = document.getElementById('sentenceModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+        
+        function saveSentence(imageId, frenchWord, sentence) {
+            if (!sentence) {
+                onError('Please enter a sentence before saving.');
+                return;
+            }
+            
+            apiService.saveSentence(imageId, sentence, function(err, data) {
+                if (err) {
+                    onError('Failed to save sentence: ' + err);
+                } else {
+                    closeSentenceModal();
+                    loadSentence(imageId); // Refresh the sentence display
+                    
+                    // Show success message
+                    const successMsg = document.createElement('div');
+                    successMsg.style.cssText = `
+                        position: fixed;
+                        top: 20px;
+                        right: 20px;
+                        background: #28a745;
+                        color: white;
+                        padding: 15px 20px;
+                        border-radius: 8px;
+                        font-size: 14px;
+                        z-index: 1000;
+                        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+                        max-width: 300px;
+                    `;
+                    successMsg.innerHTML = `
+                        <i class="fas fa-check-circle"></i>
+                        Sentence saved successfully!
+                    `;
+                    document.body.appendChild(successMsg);
+                    setTimeout(() => {
+                        if (successMsg.parentNode) {
+                            successMsg.remove();
+                        }
+                    }, 3000);
+                }
+            });
+        }
 
         (function refresh() {
             // Load user information
@@ -345,3 +516,174 @@ let index = (function () {
 
     });
 })();
+
+// Global function for French pronunciation using proxied Google Translate TTS
+function playFrenchPronunciation(frenchText, buttonElement) {
+    console.log(`[TTS] Starting pronunciation for: "${frenchText}"`);
+    
+    // Show loading state
+    const originalIcon = buttonElement.innerHTML;
+    buttonElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    buttonElement.disabled = true;
+    
+    // Function to restore button state
+    const restoreButton = () => {
+        buttonElement.innerHTML = originalIcon;
+        buttonElement.disabled = false;
+    };
+
+    // Try Google TTS first, fallback to Web Speech API
+    console.log('[TTS] Using proxied Google Translate TTS...');
+    tryProxiedGoogleTTS(frenchText, restoreButton);
+
+    function tryProxiedGoogleTTS(text, restoreButton) {
+        console.log('[TTS] Google TTS: Starting proxied request...');
+        try {
+            // Use server proxy endpoint to avoid CORS issues
+            const cleanText = encodeURIComponent(text.trim());
+            const ttsUrl = `/api/tts/${cleanText}`;
+            console.log('[TTS] Google TTS: URL -', ttsUrl);
+            
+            // Create audio element
+            const audio = new Audio();
+            let hasEnded = false; // Flag to prevent multiple calls
+            
+            audio.onloadstart = () => {
+                console.log('[TTS] Google TTS: Audio loading started');
+            };
+            audio.oncanplay = () => {
+                console.log('[TTS] Google TTS: Audio can play, attempting to start...');
+                const playPromise = audio.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        console.log('[TTS] Google TTS: Audio playing successfully');
+                    }).catch(error => {
+                        console.log('[TTS] Google TTS: Play failed -', error);
+                        if (!hasEnded) {
+                            hasEnded = true;
+                            clearTimeout(loadTimeout);
+                            tryWebSpeechAPI(text, restoreButton);
+                        }
+                    });
+                }
+            };
+            audio.onended = () => {
+                console.log('[TTS] Google TTS: Success - pronunciation completed');
+                if (!hasEnded) {
+                    hasEnded = true;
+                    clearTimeout(loadTimeout);
+                    restoreButton();
+                }
+            };
+            audio.onerror = (e) => {
+                console.log('[TTS] Google TTS: Audio error -', e);
+                if (!hasEnded) {
+                    hasEnded = true;
+                    clearTimeout(loadTimeout);
+                    tryWebSpeechAPI(text, restoreButton);
+                }
+            };
+            // Set timeout for loading
+            const loadTimeout = setTimeout(() => {
+                console.log('[TTS] Google TTS: Timeout - taking too long to load');
+                if (!hasEnded) {
+                    hasEnded = true;
+                    tryWebSpeechAPI(text, restoreButton);
+                }
+            }, 10000); // Increased timeout for server processing
+            audio.onload = () => {
+                console.log('[TTS] Google TTS: Audio loaded successfully');
+                // Don't clear timeout here, let onended handle it
+            };
+            audio.src = ttsUrl;
+            audio.load();
+        } catch (error) {
+            console.log('[TTS] Google TTS: Exception -', error);
+            tryWebSpeechAPI(text, restoreButton);
+        }
+    }
+
+    function tryWebSpeechAPI(text, restoreButton) {
+        console.log('[TTS] Web Speech API: Starting browser TTS...');
+        try {
+            if (!('speechSynthesis' in window)) {
+                console.log('[TTS] Web Speech API: Not supported in this browser');
+                showPronunciationError(restoreButton);
+                return;
+            }
+
+            // Cancel any ongoing speech
+            speechSynthesis.cancel();
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'fr-FR'; // French language
+            utterance.rate = 0.8; // Slightly slower for clarity
+            utterance.volume = 1;
+            
+            utterance.onstart = () => {
+                console.log('[TTS] Web Speech API: Speech started');
+            };
+            
+            utterance.onend = () => {
+                console.log('[TTS] Web Speech API: Success - pronunciation completed');
+                restoreButton();
+            };
+            
+            utterance.onerror = (event) => {
+                console.log('[TTS] Web Speech API: Error -', event.error);
+                showPronunciationError(restoreButton);
+            };
+            
+            // Try to get a French voice
+            const voices = speechSynthesis.getVoices();
+            const frenchVoice = voices.find(voice => 
+                voice.lang.startsWith('fr') || 
+                voice.name.toLowerCase().includes('french') ||
+                voice.name.toLowerCase().includes('francais')
+            );
+            
+            if (frenchVoice) {
+                utterance.voice = frenchVoice;
+                console.log('[TTS] Web Speech API: Using French voice -', frenchVoice.name);
+            } else {
+                console.log('[TTS] Web Speech API: No French voice found, using default');
+            }
+            
+            speechSynthesis.speak(utterance);
+            
+        } catch (error) {
+            console.log('[TTS] Web Speech API: Exception -', error);
+            showPronunciationError(restoreButton);
+        }
+    }
+}
+
+function showPronunciationError(restoreButton) {
+    console.log('[TTS] All pronunciation methods failed - showing error message');
+    // Show user-friendly error message
+    const errorMsg = document.createElement('div');
+    errorMsg.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #e74c3c;
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        font-size: 14px;
+        z-index: 1000;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        max-width: 300px;
+    `;
+    errorMsg.innerHTML = `
+        <i class="fas fa-exclamation-triangle"></i>
+        Pronunciation not available. Please check your internet connection or browser settings.
+    `;
+    document.body.appendChild(errorMsg);
+    setTimeout(() => {
+        if (errorMsg.parentNode) {
+            errorMsg.remove();
+        }
+    }, 4000);
+    restoreButton();
+}

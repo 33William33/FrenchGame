@@ -26,6 +26,16 @@ let logs = (function () {
             return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
         }
         
+        function highlightCorrectAnswer(sentence, correctAnswer) {
+            if (!sentence || !correctAnswer) return sentence || 'N/A';
+            
+            // Create a case-insensitive regex to find the correct answer word
+            const regex = new RegExp(`\\b(${correctAnswer.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})\\b`, 'gi');
+            
+            // Replace the correct answer with a highlighted version
+            return sentence.replace(regex, '<span class="highlighted-correct-word">$1</span>');
+        }
+        
         function loadMatchGameStats() {
             fetch('/api/match-game/stats')
                 .then(response => response.json())
@@ -182,6 +192,61 @@ let logs = (function () {
                 });
         }
         
+        function loadDropSentenceGameStats() {
+            fetch('/api/drop-sentence-game/stats')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    
+                    // Update overview stats
+                    document.getElementById('drop-sentence-total-games').textContent = data.totalGames;
+                    document.getElementById('drop-sentence-average-score').textContent = data.averageScore + '%';
+                    document.getElementById('drop-sentence-best-score').textContent = data.bestScore + '%';
+                    document.getElementById('drop-sentence-total-correct').textContent = data.totalCorrectAnswers;
+                    
+                    // Update recent games
+                    const recentGamesContainer = document.getElementById('drop-sentence-recent-games');
+                    if (data.recentGames && data.recentGames.length > 0) {
+                        recentGamesContainer.innerHTML = data.recentGames.map(game => {
+                            const totalQuestions = game.correctAnswers + game.incorrectAnswers;
+                            return `
+                            <div class="game-entry clickable-game" data-game-id="${game._id}" data-game-type="drop-sentence" style="cursor: pointer;">
+                                <div class="game-score ${game.score >= 80 ? 'excellent' : game.score >= 60 ? 'good' : 'needs-improvement'}">
+                                    ${game.score}%
+                                </div>
+                                <div class="game-details">
+                                    <div class="game-info">
+                                        <span class="game-questions">${game.correctAnswers}/${totalQuestions} correct</span>
+                                        <span class="game-time">${formatDuration(game.completionTime)}</span>
+                                        <span class="game-level">Level ${(game.level !== undefined && game.level !== null) ? game.level + 1 : 1}</span>
+                                    </div>
+                                    <div class="game-date">${formatDate(game.date)}</div>
+                                    <div class="click-hint">Click to view details</div>
+                                </div>
+                            </div>
+                        `;
+                        }).join('');
+                        
+                        // Add event listeners to clickable game entries
+                        recentGamesContainer.querySelectorAll('.clickable-game').forEach(entry => {
+                            entry.addEventListener('click', function() {
+                                const gameId = this.dataset.gameId;
+                                const gameType = this.dataset.gameType;
+                                showGameDetails(gameId, gameType);
+                            });
+                        });
+                    } else {
+                        recentGamesContainer.innerHTML = '<div class="no-games">No drop sentence games played yet</div>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading drop sentence game stats:', error);
+                    onError('Failed to load drop sentence game statistics');
+                });
+        }
+        
         function loadUserInfo() {
             apiService.getCurrentUser(function(err, user) {
                 if (err) {
@@ -206,6 +271,7 @@ let logs = (function () {
             loadMatchGameStats();
             loadSpellingGameStats();
             loadDropGameStats();
+            loadDropSentenceGameStats();
             
             // Reset button after a short delay
             setTimeout(() => {
@@ -249,7 +315,9 @@ let logs = (function () {
             const levelText = (game.level !== undefined && game.level !== null) ? game.level + 1 : 1;
             
             // Get the appropriate icon for each game type
-            const gameIcon = gameType === 'match' ? 'puzzle-piece' : gameType === 'spelling' ? 'keyboard' : 'meteor';
+            const gameIcon = gameType === 'match' ? 'puzzle-piece' : 
+                           gameType === 'spelling' ? 'keyboard' : 
+                           gameType === 'drop-sentence' ? 'file-text' : 'meteor';
             
             modalContent.innerHTML = `
                 <div class="modal-header">
@@ -315,23 +383,28 @@ let logs = (function () {
                                             </div>
                                         </div>
                                         
-                                        <div class="question-content${gameType === 'drop' ? ' drop-game' : ''}">
-                                            <div class="question-field">
-                                                <strong>Question:</strong>
-                                                <div class="value">${question.englishWord || question.question || 'N/A'}</div>
-                                            </div>
-                                            <div class="question-field">
-                                                <strong>Correct Answer:</strong>
-                                                <div class="value correct-answer">${question.correctAnswer}</div>
-                                            </div>
-                                            ${gameType !== 'drop' ? `
-                                                <div class="question-field">
-                                                    <strong>Your Answer:</strong>
-                                                    <div class="value user-answer ${question.isCorrect ? 'correct' : 'incorrect'}">
-                                                        ${question.selectedAnswer || question.userAnswer || 'No answer provided'}
-                                                    </div>
+                                        <div class="question-content${gameType === 'drop' || gameType === 'drop-sentence' ? ' drop-game' : ''}">
+                                            <div class="question-text-row">
+                                                <div class="question-field question-field-full">
+                                                    <strong>Question:</strong>
+                                                    <div class="value question-value">${gameType === 'drop-sentence' ? 
+                                                        highlightCorrectAnswer(question.sentence || 'N/A', question.correctAnswer || question.correctWord) : 
+                                                        (question.englishWord || question.question || 'N/A')}</div>
                                                 </div>
-                                            ` : ''}
+                                            </div>
+                                            <div class="answers-row">
+                                                ${gameType !== 'drop' ? `
+                                                    <div class="question-field">
+                                                        <strong>Your Answer:</strong>
+                                                        <div class="value user-answer ${question.isCorrect ? 'correct' : 'incorrect'}">
+                                                            ${gameType === 'drop-sentence' ? 
+                                                                (question.selectedAnswer || question.selectedWord || 'No answer provided') :
+                                                                (question.selectedAnswer || question.userAnswer || 'No answer provided')
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                ` : ''}
+                                            </div>
                                         </div>
                                         
                                         ${question.timestamp ? `
@@ -379,5 +452,6 @@ let logs = (function () {
         loadMatchGameStats();
         loadSpellingGameStats();
         loadDropGameStats();
+        loadDropSentenceGameStats();
     });
 })();

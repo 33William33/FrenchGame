@@ -270,6 +270,18 @@ body {
     box-shadow: 0 8px 25px rgba(245, 87, 108, 0.3);
 }
 
+/* Drop Sentence Button Styling */
+.drop-sentence-btn {
+    background: linear-gradient(135deg, #17a2b8 0%, #28a745 100%);
+    border: 2px solid rgba(23, 162, 184, 0.3);
+}
+
+.drop-sentence-btn:hover {
+    background: linear-gradient(135deg, #28a745 0%, #17a2b8 100%);
+    border-color: rgba(40, 167, 69, 0.5);
+    box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
+}
+
 /* Compact spacing for game content */
 .below.compact {
     margin-top: 0.5rem;
@@ -288,6 +300,12 @@ body {
     max-width: 1200px;
     margin: 2rem auto;
     padding: 0 2rem;
+}
+
+/* Fix for pages with sticky footer needs */
+.page-login .main-content,
+.page-gallery .main-content {
+    flex: 1;
 }
 
 .content-container {
@@ -498,7 +516,7 @@ body {
     color: white;
     text-align: center;
     padding: 2rem;
-    margin-top: 4rem;
+    margin-top: auto;
 }
 
 .footer-content {
@@ -531,6 +549,32 @@ body {
   align-items: center;
   justify-content: center;
   padding: 2rem;
+}
+
+/* Fix for login and gallery pages footer positioning */
+body:has(.login-container),
+body:has(.image-display-area) {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+body:has(.login-container) .main-content,
+body:has(.image-display-area) .main-content {
+  flex: 1;
+}
+
+/* Alternative fix using page-specific classes */
+.page-login,
+.page-gallery {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.page-login .main-content,
+.page-gallery .main-content {
+  flex: 1;
 }
 
 .login-wrapper {
@@ -697,11 +741,28 @@ body {
   background: linear-gradient(135deg, #f3e5f5, #ce93d8);
   color: #7b1fa2;
   border: 2px solid #9c27b0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .word-french::before {
   content: "🇫🇷 ";
   font-size: 1.2rem;
+}
+
+/* Modal pronunciation button */
+.modal-pronunciation {
+  width: 28px;
+  height: 28px;
+  font-size: 12px;
+  margin-left: 8px;
+  background: linear-gradient(135deg, #9c27b0, #7b1fa2);
+  flex-shrink: 0;
+}
+
+.modal-pronunciation:hover {
+  background: linear-gradient(135deg, #8e24aa, #6a1b9a);
 }
 
 .modal-meta {
@@ -1433,6 +1494,40 @@ body {
     transform: translateX(5px);
 }
 
+/* Correct Answer Display (bottom-left for wrong answers) */
+.correct-answer-display {
+    position: absolute;
+    bottom: 120px;
+    left: 20px;
+    max-width: 250px;
+    z-index: 15;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.correct-answer-item {
+    background: rgba(40, 167, 69, 0.9);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    box-shadow: 0 3px 10px rgba(40, 167, 69, 0.3);
+    transition: all 0.3s ease;
+    border-left: 4px solid #28a745;
+    backdrop-filter: blur(5px);
+}
+
+.correct-answer-item:first-child {
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+}
+
+.correct-answer-item:hover {
+    transform: translateX(5px);
+}
+
 .input-area {
     display: flex;
     gap: 15px;
@@ -1631,11 +1726,11 @@ body {
 
 .modal-content {
     background: white;
-    padding: 3rem;
+    padding: 1.5rem;
     border-radius: 20px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     text-align: center;
-    max-width: 500px;
+    max-width: 640px;
     width: 90%;
 }
 
@@ -1723,5 +1818,426 @@ body {
     
     .submit-btn {
         width: 100%;
+    }
+}
+
+/* Sentence Management Styles */
+.sentence-section {
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 10px;
+    border: 2px solid #e9ecef;
+    width: 440px;
+    max-width: 100%;
+}
+
+.sentence-display {
+    margin-bottom: 0.75rem;
+}
+
+.sentence-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.sentence-label {
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.sentence-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.sentence-text {
+    background: #f8f9fa;
+    padding: 0.75rem;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    min-height: 60px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+}
+
+.sentence-btn {
+    background: linear-gradient(135deg, #667eea, #87CEEB);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.sentence-btn:hover {
+    background: linear-gradient(135deg, #5a67d8, #76c7e0);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.sentence-btn.delete-sentence {
+    background: linear-gradient(135deg, #dc3545, #e83e8c);
+}
+
+.sentence-btn.delete-sentence:hover {
+    background: linear-gradient(135deg, #c82333, #d91a72);
+}
+
+/* Sentence Modal Styles */
+.sentence-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000;
+    backdrop-filter: blur(5px);
+}
+
+.sentence-modal-content {
+    background: white;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+}
+
+.sentence-modal-header {
+    background: linear-gradient(135deg, #667eea, #87CEEB);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sentence-modal-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.sentence-modal-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.3s ease;
+}
+
+.sentence-modal-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.sentence-modal-body {
+    padding: 2rem;
+}
+
+.sentence-modal-body label {
+    display: block;
+    margin-bottom: 1rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+#sentenceInput {
+    width: 100%;
+    min-height: 120px;
+    padding: 1rem;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: inherit;
+    resize: vertical;
+    transition: border-color 0.3s ease;
+}
+
+#sentenceInput:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.sentence-modal-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+}
+
+.sentence-save-btn, .sentence-cancel-btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.sentence-save-btn {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+}
+
+.sentence-save-btn:hover {
+    background: linear-gradient(135deg, #218838, #1ea080);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.3);
+}
+
+.sentence-cancel-btn {
+    background: #6c757d;
+    color: white;
+}
+
+.sentence-cancel-btn:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(108, 117, 125, 0.3);
+}
+
+/* Responsive styles for sentence features */
+@media (max-width: 768px) {
+    .sentence-section {
+        padding: 0.75rem;
+    }
+    
+    .sentence-actions {
+        justify-content: center;
+    }
+    
+    .sentence-btn {
+        flex: 1;
+        justify-content: center;
+    }
+    
+    .sentence-modal-content {
+        width: 95%;
+        margin: 1rem;
+    }
+    
+    .sentence-modal-body {
+        padding: 1.5rem;
+    }
+    
+    .sentence-modal-actions {
+        flex-direction: column;
+    }
+    
+    .sentence-save-btn, .sentence-cancel-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Drop Sentence Game Styles */
+.word-selection-area {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+}
+
+.current-sentence-display {
+    text-align: center;
+}
+
+.sentence-prompt h3 {
+    color: #2c3e50;
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+    font-weight: 600;
+}
+
+.sentence-text-large {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 2px solid #e9ecef;
+    font-size: 1.2rem;
+    line-height: 1.6;
+    color: #495057;
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+
+.word-options h4 {
+    color: #2c3e50;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.word-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.word-option-btn {
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #495057;
+    text-align: center;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.word-option-btn:hover {
+    border-color: #667eea;
+    background: #f8f9fa;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+}
+
+.word-option-btn.selected {
+    border-color: #667eea;
+    background: linear-gradient(135deg, #667eea, #87CEEB);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.word-option-btn.correct {
+    border-color: #28a745;
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    cursor: default;
+}
+
+.word-option-btn.incorrect {
+    border-color: #dc3545;
+    background: linear-gradient(135deg, #dc3545, #e83e8c);
+    color: white;
+    cursor: default;
+}
+
+.word-option-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.game-controls {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.falling-sentence {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.95);
+    color: #2c3e50;
+    padding: 1rem 1.5rem;
+    border-radius: 15px;
+    font-weight: 600;
+    font-size: 16px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+    transform-origin: center;
+    transition: all 0.3s ease;
+    cursor: default;
+    user-select: none;
+    border: 2px solid rgba(102, 126, 234, 0.3);
+    max-width: 380px;
+    min-width: 200px;
+    text-align: center;
+    line-height: 1.4;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+}
+
+.falling-sentence.matched {
+    background: #28a745;
+    color: white;
+    transform: scale(1.2);
+    z-index: 20;
+}
+
+.falling-sentence.incorrect-sentence {
+    transition: all 0.8s ease-out;
+    z-index: 20;
+}
+
+.falling-sentence.exploding {
+    animation: explode 0.6s ease-out forwards;
+}
+
+/* Responsive design for drop sentence game */
+@media (max-width: 768px) {
+    .word-buttons {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    .word-option-btn {
+        padding: 0.75rem 1rem;
+        min-height: 50px;
+        font-size: 0.9rem;
+    }
+    
+    .sentence-text-large {
+        padding: 1rem;
+        font-size: 1rem;
+        min-height: 60px;
+    }
+    
+    .falling-sentence {
+        font-size: 14px;
+        padding: 0.75rem 1rem;
+        max-width: 280px;
+        min-width: 150px;
+    }
+    
+    .game-controls {
+        flex-direction: column;
+        align-items: center;
     }
 }
