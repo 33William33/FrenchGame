@@ -284,7 +284,7 @@
 
 .question-field {
     margin-bottom: 0;
-    text-align: left;
+    text-align: center;
 }
 
 .question-field:last-child {
@@ -323,12 +323,15 @@
 }
 
 /* Center align the "Your Answer" field specifically */
-.question-field:has(strong:contains("Your Answer")) {
+
+.question-field:has(strong:contains("Your Answer")),
+.question-field:has(strong:contains("Correct Answer")) {
     text-align: center;
 }
 
-/* Fallback for browsers that don't support :has() - target user-answer values */
-.question-field .value.user-answer {
+/* Fallback for browsers that don't support :has() - target user-answer or correct-answer values */
+.question-field .value.user-answer,
+.question-field .value.correct-answer {
     text-align: center;
 }
 

@@ -164,7 +164,7 @@ let groupSelect = (function () {
                         <div class="level-progress-fill" style="width: ${progress}%"></div>
                     </div>
                 </div>
-                ${!isLast && !isFirst ? '<div class="roadmap-connector"></div>' : ''}
+                ${!isLast ? '<div class="roadmap-connector"></div>' : ''}
             `;
             
             if (isUnlocked) {

@@ -41,6 +41,22 @@ let index = (function () {
             });
         }
 
+        // Function to remove French articles
+        function removeArticles(word) {
+            const cleanWord = word.toLowerCase().trim();
+            // Remove common French articles
+            if (cleanWord.startsWith('le ')) {
+                return cleanWord.substring(3);
+            } else if (cleanWord.startsWith('la ')) {
+                return cleanWord.substring(3);
+            } else if (cleanWord.startsWith('les ')) {
+                return cleanWord.substring(4);
+            } else if (cleanWord.startsWith('l\' ') || cleanWord.startsWith('l\'')) {
+                return cleanWord.replace(/^l['\s]*\s*/, '');
+            }
+            return cleanWord;
+        }
+
         // Image Modal Functions
         function openImageModal(imageData) {
             const modal = document.getElementById('imageModal');
@@ -68,7 +84,8 @@ let index = (function () {
             modalPronunciationBtn.addEventListener('click', function(e) {
                 e.stopPropagation();
                 const frenchText = this.getAttribute('data-french-text');
-                playFrenchPronunciation(frenchText, this);
+                const clean = removeArticles(frenchText);
+                playFrenchPronunciation(clean, this);
             });
             
             // Format date
@@ -165,7 +182,8 @@ let index = (function () {
             pronunciationBtn.addEventListener('click', function(e) {
                 e.stopPropagation();
                 const frenchText = this.getAttribute('data-french-text');
-                playFrenchPronunciation(frenchText, this);
+                const clean = removeArticles(frenchText);
+                playFrenchPronunciation(clean, this);
             });
             
             // Add event listeners for sentence management
@@ -270,6 +288,31 @@ let index = (function () {
                 if (err) return onError(err);
                 if (imgts.length > 0) {
                     imgts = imgts.reverse(); // Reverse the array to show newest first
+                    // Add level dropdown if not present
+                    let levelDropdown = document.getElementById('level-dropdown');
+                    if (!levelDropdown) {
+                        levelDropdown = document.createElement('select');
+                        levelDropdown.id = 'level-dropdown';
+                        levelDropdown.className = 'select-level';
+                        // Calculate max level
+                        const maxLevel = Math.floor((imgts[0]._id - 1) / 30) + 1;
+                        for (let lvl = maxLevel; lvl >= 1; lvl--) {
+                            const opt = document.createElement('option');
+                            opt.value = lvl;
+                            opt.textContent = `🎯 Select Level ${lvl}`;
+                            levelDropdown.appendChild(opt);
+                        }
+                        // Insert dropdown above #display
+                        const displayDiv = document.getElementById('display');
+                        displayDiv.parentNode.insertBefore(levelDropdown, displayDiv);
+                        // Add event handler
+                        levelDropdown.addEventListener('change', function() {
+                            const selectedLevel = parseInt(this.value);
+                            // First image index for this level
+                            const firstImgId = (selectedLevel - 1) * 30 + 1;
+                            displayImage(firstImgId);
+                        });
+                    }
                     var params = (new URL(document.location)).searchParams;
                     var imgid = params.get("img");
                     if (imgid !== undefined && imgid !== null) {
@@ -439,6 +482,11 @@ let index = (function () {
                 // Close on background click
                 modal.addEventListener('click', function(e) {
                     if (e.target === modal) {
+                        saveSentence(imageId, frenchWord, textarea.value.trim());
+                        // Prevent closing if save was successful
+                        e.stopPropagation();
+                        // Close modal after saving
+                        e.preventDefault();
                         closeSentenceModal();
                     }
                 });

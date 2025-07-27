@@ -13,7 +13,7 @@ let dropSentenceGame = (function() {
         sentenceIndex: 0,
         gameStartTime: null,
         totalSentences: 5,
-        sentenceSpeed: 0.5, // pixels per frame (slower than words)
+        sentenceSpeed: 0.25, // pixels per frame (slower than words)
         currentBatch: 0,
         sentencesPerBatch: 5,
         allGameSentences: [], // All sentences for the entire session
@@ -284,17 +284,6 @@ let dropSentenceGame = (function() {
         }
 
         function checkGameEnd() {
-            // Create initial log entry after first batch if none exists yet
-            if (!gameState.currentLogId) {
-                const totalQuestions = gameState.correctAnswers + gameState.incorrectAnswers;
-                const correctCount = Number(gameState.correctAnswers) || 0;
-                const totalCount = Number(totalQuestions) || 0;
-                const score = totalCount > 0 ? Math.round((correctCount / totalCount) * 100) : 0;
-                const completionTime = Math.round((new Date() - gameState.gameStartTime) / 1000);
-                
-                logGameProgress(score, completionTime);
-            }
-            
             // Check if there are more sentences to play
             const nextBatchStart = (gameState.currentBatch + 1) * gameState.sentencesPerBatch;
             const hasMoreSentences = nextBatchStart < gameState.allGameSentences.length;
@@ -960,8 +949,12 @@ let dropSentenceGame = (function() {
                     const score = totalCount > 0 ? Math.round((correctCount / totalCount) * 100) : 0;
                     const completionTime = Math.round((new Date() - gameState.gameStartTime) / 1000);
                     
-                    // Update existing log
-                    logGameProgress(score, completionTime);
+                    // If no log exists yet, create one (this happens after first batch)
+                    if (!gameState.currentLogId) {
+                        logGameProgress(score, completionTime); // This will create the initial log
+                    } else {
+                        logGameProgress(score, completionTime); // This will update existing log
+                    }
                     
                     // Clear the canvas to reset missed words and other game elements
                     clearCanvas();

@@ -393,6 +393,14 @@ let logs = (function () {
                                                 </div>
                                             </div>
                                             <div class="answers-row">
+                                                ${gameType !== 'drop-sentence' ? `
+                                                    <div class="question-field">
+                                                        <strong>Correct Answer:</strong>
+                                                        <div class="value correct-answer">
+                                                            ${question.correctAnswer || question.correctWord || 'N/A'}
+                                                        </div>
+                                                    </div>
+                                                ` : ''}
                                                 ${gameType !== 'drop' ? `
                                                     <div class="question-field">
                                                         <strong>Your Answer:</strong>

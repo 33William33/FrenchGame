@@ -170,15 +170,10 @@
     background: #adb5bd;
 }
 
-.roadmap-level.last .roadmap-connector,
-.roadmap-level.first .roadmap-connector {
-    display: none;
-}
-
 /* Decorative Elements */
 .roadmap-container::before {
-    content: "🎯";
-    position: absolute;
+    content: "📍";
+    position: flex;
     left: 0;
     top: 50%;
     transform: translateY(-50%);
@@ -192,7 +187,7 @@
 
 .roadmap-container::after {
     content: "🏆";
-    position: absolute;
+    position: flex;
     right: 0;
     top: 50%;
     transform: translateY(-50%);

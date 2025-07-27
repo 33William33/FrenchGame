@@ -1222,13 +1222,13 @@ app.get("/api/tts/:text", verifyToken, async function (req, res, next) {
 // Get sentence for a specific image
 app.get("/api/sentences/:imageId", verifyToken, function (req, res, next) {
     if (!req.user) {
-        return res.status(401).json({ error: 'Not authenticated' });
+        return res.status(401).json('Not authenticated');
     }
 
     const imageId = parseInt(req.params.imageId);
     sentences.findOne({ imageId: imageId }, function (err, sentence) {
-        if (err) return res.status(500).json({ error: 'Database error' });
-        if (!sentence) return res.status(404).json({ error: 'Sentence not found' });
+        if (err) return res.status(500).json('Database error');
+        if (!sentence) return res.status(404).json('Sentence not found');
         res.json(sentence);
     });
 });
