@@ -55,6 +55,11 @@
   border: 1px solid rgba(102, 126, 234, 0.2);
 }
 
+.select-level option {
+  background: white;
+  color: #495057;
+}
+
 .img-id {
   color: #667eea;
 }

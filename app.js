@@ -14,6 +14,8 @@ import path from "path";
 import multer from "multer";
 import favicon from "serve-favicon";
 import { fileURLToPath } from "url";
+import e from "express";
+import { env } from "process";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -45,10 +47,12 @@ app.use(favicon(path.join(__dirname, 'static', 'favicon.ico')));
 
 // const model = new OpenAI({
 //     modelName: "dall-e-2", // or "dall-e-2"
-//     apiKey: "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", // Replace with your key
+//     apiKey: "API_KEY", // Replace with your key
 //   });
 
-const openai = new OpenAI({ apiKey: "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" });
+API_KEY = env.OPENAI_API_KEY;
+// openAI key used for test only, unable to use now
+const openai = new OpenAI({ apiKey: API_KEY || "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" });
 
 let upload = multer({ dest: path.join(__dirname, "uploads") });
 
