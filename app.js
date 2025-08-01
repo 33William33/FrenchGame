@@ -14,14 +14,15 @@ import path from "path";
 import multer from "multer";
 import favicon from "serve-favicon";
 import { fileURLToPath } from "url";
-import e from "express";
-import { env } from "process";
+import dotenv from 'dotenv';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PORT = 3000;
 
 const app = express();
+
+dotenv.config({ path: './.env' });
 
 
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -50,9 +51,8 @@ app.use(favicon(path.join(__dirname, 'static', 'favicon.ico')));
 //     apiKey: "API_KEY", // Replace with your key
 //   });
 
-API_KEY = env.OPENAI_API_KEY;
 // openAI key used for test only, unable to use now
-const openai = new OpenAI({ apiKey: API_KEY || "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" });
+const openai = new OpenAI({ apiKey: process.env.API_KEY || "" });
 
 let upload = multer({ dest: path.join(__dirname, "uploads") });
 
@@ -334,7 +334,7 @@ const verifyToken = async (req, res, next) => {
       // 2. Extract and verify token
       const token = authHeader.split(' ')[1];
       const decoded = await new Promise((resolve, reject) => {
-        jwt.verify(token, process.env.JWT_SECRET || "secret", (err, decoded) => {
+        jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
           if (err) return reject(err);
           resolve(decoded);
         });

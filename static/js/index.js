@@ -289,6 +289,17 @@ let index = (function () {
                 if (imgts.length > 0) {
                     imgts = imgts.reverse(); // Reverse the array to show newest first
                     // Add level dropdown if not present
+                    let controlBar = document.getElementById('control-bar');
+                    if (!controlBar) {
+                        controlBar = document.createElement('div');
+                        controlBar.id = 'control-bar';
+                        controlBar.style.display = 'flex';
+                        controlBar.style.gap = '110px'; // spacing between items
+                        controlBar.style.marginBottom = '0'; // spacing below controls
+
+                        const displayDiv = document.getElementById('display');
+                        displayDiv.parentNode.insertBefore(controlBar, displayDiv);
+                    }
                     let levelDropdown = document.getElementById('level-dropdown');
                     if (!levelDropdown) {
                         levelDropdown = document.createElement('select');
@@ -303,8 +314,8 @@ let index = (function () {
                             levelDropdown.appendChild(opt);
                         }
                         // Insert dropdown above #display
-                        const displayDiv = document.getElementById('display');
-                        displayDiv.parentNode.insertBefore(levelDropdown, displayDiv);
+                        const controlBar = document.getElementById('control-bar');
+                        controlBar.appendChild(levelDropdown);
                         // Add event handler
                         levelDropdown.addEventListener('change', function() {
                             const selectedLevel = parseInt(this.value);
@@ -313,6 +324,48 @@ let index = (function () {
                             displayImage(firstImgId);
                         });
                     }
+
+                    // Add search bar if not present
+                    let searchBar = document.getElementById('search-french-word');
+                    if (!searchBar) {
+                        searchBar = document.createElement('input');
+                        searchBar.type = 'text';
+                        searchBar.id = 'search-french-word';
+                        searchBar.placeholder = '🔍 Search French word...';
+                        searchBar.style.fontStyle = 'italic';
+                        searchBar.style.color = 'rgb(108, 117, 125)';
+                        searchBar.style.margin = '10px 0 10px 0';
+                        searchBar.style.fontSize = '16px';
+                        searchBar.style.padding = '4px 10px'
+                        searchBar.style.border = '2px solid #a3a6a9ff';
+                        searchBar.style.borderRadius = '10px';
+                        searchBar.style.width = '220px';
+                        // Insert search bar above level dropdown (or above display if dropdown not present)
+                        const controlBar = document.getElementById('control-bar');
+                        controlBar.appendChild(searchBar);
+                    }
+
+                    // Add search bar event handler
+                    searchBar.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter') {
+                            const searchValue = searchBar.value.trim().toLowerCase();
+                            if (!searchValue) return;
+                            // Find image with matching French word (author)
+                            const found = imgts.find(img => img.author && img.author.toLowerCase() === searchValue);
+                            if (found) {
+                                displayImage(found._id);
+                            } else {
+                                // Show not found message
+                                searchBar.style.background = '#ffe6e6';
+                                searchBar.value = '';
+                                searchBar.placeholder = 'Not found! Try another word.';
+                                setTimeout(() => {
+                                    searchBar.style.background = '';
+                                    searchBar.placeholder = '🔍 Search French word...';
+                                }, 1500);
+                            }
+                        }
+                    });
                     var params = (new URL(document.location)).searchParams;
                     var imgid = params.get("img");
                     if (imgid !== undefined && imgid !== null) {
